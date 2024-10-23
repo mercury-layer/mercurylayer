@@ -69,7 +69,7 @@ async fn withdraw_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let force_send = false;
 
-    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, force_send, batch_id.clone()).await;
+    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, None, force_send, batch_id.clone()).await;
 
     assert!(result.is_err());
 
@@ -86,7 +86,7 @@ async fn withdraw_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     mercuryrustlib::coin_status::update_coins(&client_config, &wallet1.name).await?;
 
-    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, force_send, batch_id).await;
+    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, None, force_send, batch_id).await;
 
     assert!(result.is_err());
 
@@ -167,7 +167,7 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let force_send = true;
 
-    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, force_send, batch_id.clone()).await;
+    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, statechain_id, None, force_send, batch_id.clone()).await;
 
     assert!(result.is_ok());
     
@@ -181,7 +181,7 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
     let wallet1: mercuryrustlib::Wallet = mercuryrustlib::sqlite_manager::get_wallet(&client_config.pool, &wallet1.name).await?;
 
     let transferred_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::TRANSFERRED);
-    let duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::DUPLICATED);
+    let duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::INVALIDATED);
 
     assert!(transferred_coin.is_some());
     assert!(duplicated_coin.is_some());
@@ -200,10 +200,10 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let error_msg = result.err().unwrap().to_string();
 
-    assert!(error_msg == "Signature does not match authentication key.");
+    // assert!(error_msg == "Signature does not match authentication key.");
 
-
-
+    assert!(error_msg == "No duplicated coins associated with this statechain ID and index 1 were found");
+    
     Ok(())
 }
 
@@ -230,7 +230,7 @@ pub async fn execute() -> Result<()> {
     withdraw_flow(&client_config, &wallet1, &wallet2).await?;
     transfer_flow(&client_config, &wallet1, &wallet2).await?;
 
-    println!("TA02 - Test \"Multiple Deposits in the Same Adress\" completed successfully");
+    println!("TA02 - Test \"Duplicate Deposits in the Same Adress\" completed successfully");
 
     Ok(())
 }

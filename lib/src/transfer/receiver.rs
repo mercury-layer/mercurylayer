@@ -4,9 +4,9 @@ use bitcoin::{hashes::{sha256, Hash}, sighash::{self, SighashCache, TapSighashTy
 use secp256k1_zkp::{PublicKey, schnorr::Signature, Secp256k1, Message, XOnlyPublicKey, musig::{MusigPubNonce, BlindingFactor, blinded_musig_pubkey_xonly_tweak_add, MusigAggNonce, MusigSession}, SecretKey, Scalar, KeyPair};
 use serde::{Serialize, Deserialize};
 
-use crate::{error::MercuryError, utils::get_network, wallet::{BackupTx, Coin, CoinStatus, Wallet}};
+use crate::{error::MercuryError, utils::get_network, wallet::{get_previous_outpoint, BackupTx, Coin, CoinStatus, Wallet}};
 
-use super::TransferMsg;
+use super::{TransferMsg, TxOutpoint};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "bindings", derive(uniffi::Record))]
@@ -75,13 +75,6 @@ pub struct StatechainInfoResponsePayload {
     pub num_sigs: u32,
     pub statechain_info: Vec<StatechainInfo>,
     pub x1_pub: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "bindings", derive(uniffi::Record))]
-pub struct TxOutpoint {
-    pub txid: String,
-    pub vout: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -159,20 +152,7 @@ pub fn get_tx0_outpoint(backup_transactions: &Vec<BackupTx>) -> Result<TxOutpoin
 
     let bkp_tx1 = backup_transactions.first().ok_or(MercuryError::NoBackupTransactionFound)?;
 
-    let tx1: Transaction = bitcoin::consensus::encode::deserialize(&hex::decode(&bkp_tx1.tx)?)?;
-
-    if tx1.input.len() > 1 {
-        return Err(MercuryError::Tx1HasMoreThanOneInput);
-    }
-
-    if tx1.output.len() > 1 {
-        return Err(MercuryError::Tx1HasMoreThanOneInput);
-    }
-
-    let tx0_txid = tx1.input[0].previous_output.txid;
-    let tx0_vout = tx1.input[0].previous_output.vout as u32;
-
-    Ok(TxOutpoint{ txid: tx0_txid.to_string(), vout: tx0_vout })
+    get_previous_outpoint(bkp_tx1)
 }
 
 pub fn verify_transfer_signature(new_user_pubkey: &str, tx0_outpoint: &TxOutpoint, transfer_msg: &TransferMsg) -> Result<bool, MercuryError> {
@@ -261,8 +241,19 @@ pub fn get_output_address_from_tx0(tx0_outpoint: &TxOutpoint, tx0_hex: &str, net
     Ok(address.to_string())
 }
 
+#[cfg_attr(feature = "bindings", uniffi::export)]
+pub fn get_amount_from_tx0(tx0_hex: &str, tx0_outpoint: &TxOutpoint,) -> Result<u64, MercuryError> {
+
+    let tx0: Transaction = bitcoin::consensus::encode::deserialize(&hex::decode(&tx0_hex)?)?;
+
+    assert!(tx0_outpoint.txid == tx0.txid().to_string());
+
+    Ok(tx0.output[tx0_outpoint.vout as usize].value)
+}
+
+#[cfg_attr(feature = "bindings", uniffi::export)]
 pub fn validate_signature_scheme(
-    transfer_msg: &TransferMsg, 
+    backup_transactions: &Vec<BackupTx>, 
     statechain_info: &StatechainInfoResponsePayload, 
     tx0_hex: &str, 
     current_blockheight: u32,
@@ -275,9 +266,19 @@ pub fn validate_signature_scheme(
 
     let mut sig_scheme_validation = true;
 
-    for (index, backup_tx) in transfer_msg.backup_transactions.iter().enumerate() {
+    for backup_tx in backup_transactions.iter() {
 
-        let statechain_info = statechain_info.statechain_info.get(index).unwrap();
+        let statechain_info = statechain_info.statechain_info
+            .iter()
+            .find(|info| info.tx_n == backup_tx.tx_n);
+
+        if statechain_info.is_none() {
+            println!("statechain_info not found");
+            sig_scheme_validation = false;
+            break;
+        }
+
+        let statechain_info = statechain_info.unwrap();
 
         let is_signature_valid = verify_transaction_signature(&backup_tx.tx, &tx0_hex, fee_rate_tolerance, current_fee_rate_sats_per_byte);
         if is_signature_valid.is_err() {
@@ -483,7 +484,8 @@ fn get_tx_hash(tx_0: &Transaction, tx_n: &Transaction) -> Result<Message, Mercur
         return Err(MercuryError::EmptyWitnessData);
     }
 
-    let sighash_type = TapSighashType::from_consensus_u8(witness_data.last().unwrap().to_owned())?;
+    // let sighash_type = TapSighashType::from_consensus_u8(witness_data.last().unwrap().to_owned())?;
+    let sighash_type = TapSighashType::All;
 
     let hash = SighashCache::new(tx_n).taproot_key_spend_signature_hash(
         0,

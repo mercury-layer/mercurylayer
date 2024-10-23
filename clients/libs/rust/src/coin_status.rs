@@ -59,7 +59,16 @@ async fn check_deposit(client_config: &ClientConfig, coin: &mut Coin, wallet_net
         let utxo_txid = utxo.tx_hash.to_string();
         let utxo_vout = utxo.tx_pos as u32;
 
-        let backup_tx = create_tx1(client_config, coin, wallet_netwotk, &utxo_txid, utxo_vout).await?;
+        if coin.status != CoinStatus::INITIALISED {
+            return Err(anyhow!("The coin with the public key {} is not in the INITIALISED state", coin.user_pubkey.to_string()));
+        }
+    
+        coin.utxo_txid = Some(utxo_txid.to_string());
+        coin.utxo_vout = Some(utxo_vout);
+    
+        coin.status = CoinStatus::IN_MEMPOOL;
+
+        let backup_tx = create_tx1(client_config, coin, wallet_netwotk, 1u32).await?;
 
         let activity_utxo = format!("{}:{}", utxo.tx_hash.to_string(), utxo.tx_pos);
 
@@ -256,6 +265,21 @@ pub async fn update_coins(client_config: &ClientConfig, wallet_name: &str) -> Re
     let duplicated_coins = check_for_duplicated(client_config, &wallet.coins).await?;
 
     wallet.coins.extend(duplicated_coins);
+
+    // invalidate duplicated coins that were not transferred
+    for i in 0..wallet.coins.len() {
+        if wallet.coins[i].status == CoinStatus::DUPLICATED {
+            let is_transferred = (0..wallet.coins.len()).any(|j| 
+                i != j && // Skip comparing with self
+                wallet.coins[j].statechain_id == wallet.coins[i].statechain_id &&
+                wallet.coins[j].locktime == wallet.coins[i].locktime &&
+                wallet.coins[j].status == CoinStatus::TRANSFERRED
+            );
+            if is_transferred {
+                wallet.coins[i].status = CoinStatus::INVALIDATED;
+            }
+        }
+    }
 
     update_wallet(&client_config.pool, &wallet).await?;
 
