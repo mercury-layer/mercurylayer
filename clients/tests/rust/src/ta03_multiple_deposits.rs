@@ -211,6 +211,21 @@ async fn basic_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2:
     let coins_json_string = serde_json::to_string_pretty(&coins_json).unwrap();
     println!("{}", coins_json_string); */
 
+    mercuryrustlib::coin_status::update_coins(&client_config, &wallet1.name).await?;
+    let wallet1: mercuryrustlib::Wallet = mercuryrustlib::sqlite_manager::get_wallet(&client_config.pool, &wallet1.name).await?;
+
+    let new_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 0 && coin.status == CoinStatus::TRANSFERRED);
+    let duplicated_coin_1 = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 1 && coin.status == CoinStatus::TRANSFERRED);
+    let duplicated_coin_2 = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 2 && coin.status == CoinStatus::DUPLICATED);
+    let duplicated_coin_3 = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 3 && coin.status == CoinStatus::TRANSFERRED);
+
+    assert!(new_coin.is_some());
+    assert!(duplicated_coin_1.is_some());
+    assert!(duplicated_coin_2.is_some());
+    assert!(duplicated_coin_3.is_some());
+
+    // TODO: DUPLICATED coins should be invalidated after the other with same statechain_id is transferred
+
     Ok(())
 }
 
@@ -236,7 +251,7 @@ pub async fn execute() -> Result<()> {
 
     basic_workflow(&client_config, &wallet1, &wallet2).await?;
 
-    println!("TA02 - Test \"Multiple Deposits in the Same Adress\" completed successfully");
+    println!("TA03 - Test \"Multiple Deposits in the Same Adress\" completed successfully");
 
     Ok(())
 }

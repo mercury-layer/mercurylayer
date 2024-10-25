@@ -230,7 +230,7 @@ pub async fn execute() -> Result<()> {
     withdraw_flow(&client_config, &wallet1, &wallet2).await?;
     transfer_flow(&client_config, &wallet1, &wallet2).await?;
 
-    println!("TA02 - Test \"Multiple Deposits in the Same Adress\" completed successfully");
+    println!("TA02 - Test \"Duplicate Deposits in the Same Adress\" completed successfully");
 
     Ok(())
 }
