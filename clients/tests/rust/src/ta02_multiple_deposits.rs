@@ -2,7 +2,6 @@ use std::{env, process::Command, thread, time::Duration};
 
 use anyhow::{Result, Ok};
 use mercuryrustlib::{client_config::ClientConfig, BackupTx, Coin, CoinStatus, Wallet};
-use serde_json::json;
 
 use crate::{bitcoin_core, electrs};
 
