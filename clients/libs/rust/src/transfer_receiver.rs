@@ -32,6 +32,7 @@ pub struct DuplicatedCoinData {
     pub txid: String,
     pub vout: u32,
     pub amount: u64,
+    pub index: u32,
 }
 
 pub struct MessageResult2 {
@@ -40,6 +41,35 @@ pub struct MessageResult2 {
     pub duplicated_coins: Vec<DuplicatedCoinData>,
 }
 
+pub fn sort_coins_by_statechain(coins: &mut Vec<Coin>) {
+    // Create a map to store the position of first occurrence of each statechain_id
+    let mut first_positions: HashMap<String, usize> = HashMap::new();
+
+    // Record the position of the first occurrence of each statechain_id
+    for (idx, coin) in coins.iter().enumerate() {
+        if let Some(id) = &coin.statechain_id {
+            first_positions.entry(id.clone()).or_insert(idx);
+        }
+    }
+
+    // Sort the vector maintaining original order of different statechain_ids
+    coins.sort_by(|a, b| {
+        match (&a.statechain_id, &b.statechain_id) {
+            (None, None) => a.duplicate_index.cmp(&b.duplicate_index),
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (Some(id_a), Some(id_b)) => {
+                if id_a == id_b {
+                    // Same statechain_id: sort by duplicate_index
+                    a.duplicate_index.cmp(&b.duplicate_index)
+                } else {
+                    // Different statechain_ids: compare their first positions
+                    first_positions[id_a].cmp(&first_positions[id_b])
+                }
+            }
+        }
+    });
+}
 
 pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<TransferReceiveResult>{
 
@@ -71,6 +101,8 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
 
     let mut temp_coins = wallet.coins.clone();
     let mut temp_activities = wallet.activities.clone();
+
+    let mut duplicated_coins: Vec<Coin> = Vec::new();
 
     let block_header = client_config.electrum_client.block_headers_subscribe_raw()?;
     let blockheight = block_header.height as u32;
@@ -118,6 +150,22 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     received_statechain_ids.push(message_result.statechain_id.unwrap());
                 }
 
+                if message_result.duplicated_coins.len() > 0 {
+
+                    assert!(!message_result.is_batch_locked);
+
+                    for duplicated_coin_data in message_result.duplicated_coins {
+                        let mut duplicated_coin = coin.clone();
+                        duplicated_coin.status = CoinStatus::DUPLICATED;
+                        duplicated_coin.utxo_txid = Some(duplicated_coin_data.txid);
+                        duplicated_coin.utxo_vout = Some(duplicated_coin_data.vout);
+                        duplicated_coin.amount = Some(duplicated_coin_data.amount as u32);
+                        duplicated_coin.duplicate_index = duplicated_coin_data.index;
+                        // temp_coins.push(duplicated_coin);
+                        duplicated_coins.push(duplicated_coin);
+                    }
+                }
+
             } else {
 
                 let new_coin = mercurylib::transfer::receiver::duplicate_coin_to_initialized_state(&wallet, &auth_pubkey);
@@ -150,7 +198,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     continue;
                 }
 
-                temp_coins.push(new_coin);
+                temp_coins.push(new_coin.clone());
 
                 let message_result = message_result.unwrap();
 
@@ -161,10 +209,28 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                 if message_result.statechain_id.is_some() {
                     received_statechain_ids.push(message_result.statechain_id.unwrap());
                 }
+
+                if message_result.duplicated_coins.len() > 0 {
+
+                    assert!(!message_result.is_batch_locked);
+
+                    for duplicated_coin_data in message_result.duplicated_coins {
+                        let mut duplicated_coin = new_coin.clone();
+                        duplicated_coin.status = CoinStatus::DUPLICATED;
+                        duplicated_coin.utxo_txid = Some(duplicated_coin_data.txid);
+                        duplicated_coin.utxo_vout = Some(duplicated_coin_data.vout);
+                        duplicated_coin.amount = Some(duplicated_coin_data.amount as u32);
+                        duplicated_coin.duplicate_index = duplicated_coin_data.index;
+                        // temp_coins.push(duplicated_coin);
+                        duplicated_coins.push(duplicated_coin);
+                    }
+                }
             }
         }
     }
 
+    temp_coins.extend(duplicated_coins);
+    sort_coins_by_statechain(&mut temp_coins);
     wallet.coins = temp_coins.clone();
     wallet.activities = temp_activities.clone();
 
@@ -419,6 +485,7 @@ async fn process_encrypted_message2(client_config: &ClientConfig, coin: &mut Coi
                 txid: tx_outpoint.txid,
                 vout: tx_outpoint.vout,
                 amount,
+                index: index as u32,
             });
         }
     }

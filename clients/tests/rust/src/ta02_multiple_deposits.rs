@@ -2,6 +2,7 @@ use std::{env, process::Command, thread, time::Duration};
 
 use anyhow::{Result, Ok};
 use mercuryrustlib::{client_config::ClientConfig, BackupTx, Coin, CoinStatus, Wallet};
+use serde_json::json;
 
 use crate::{bitcoin_core, electrs};
 
@@ -176,9 +177,24 @@ async fn basic_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2:
 
     let transfer_receive_result = mercuryrustlib::transfer_receiver::execute(&client_config, &wallet2.name).await?;
 
+    let received_statechain_ids = transfer_receive_result.received_statechain_ids;
+
+    assert!(received_statechain_ids.contains(&statechain_id.to_string()));
+    assert!(received_statechain_ids.len() == 1);
+
+    let wallet2: mercuryrustlib::Wallet = mercuryrustlib::sqlite_manager::get_wallet(&client_config.pool, &wallet2.name).await?;
+
+    let w2_new_coin = wallet2.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 0 && coin.status == CoinStatus::CONFIRMED);
+    let w2_duplicated_coin_1 = wallet2.coins.iter().find(|&coin| coin.statechain_id == Some(statechain_id.to_string()) && coin.duplicate_index == 1 && coin.status == CoinStatus::DUPLICATED);
+    let w2_duplicated_coin_2 = wallet2.coins.iter().find(|&coin| coin.statechain_id == Some(statechain_id.to_string()) && coin.duplicate_index == 2 && coin.status == CoinStatus::DUPLICATED);
+
+    assert!(w2_new_coin.is_some());
+    assert!(w2_duplicated_coin_1.is_some());
+    assert!(w2_duplicated_coin_2.is_some());
+
     /* let mut coins_json = Vec::new();
 
-    for coin in wallet1.coins.iter() {
+    for coin in wallet2.coins.iter() {
         let obj = json!({
             "coin.user_pubkey": coin.user_pubkey,
             "coin.aggregated_address": coin.aggregated_address.as_ref().unwrap_or(&"".to_string()),
