@@ -68,7 +68,7 @@ async fn check_deposit(client_config: &ClientConfig, coin: &mut Coin, wallet_net
     
         coin.status = CoinStatus::IN_MEMPOOL;
 
-        let backup_tx = create_tx1(client_config, coin, wallet_netwotk).await?;
+        let backup_tx = create_tx1(client_config, coin, wallet_netwotk, 1u32).await?;
 
         let activity_utxo = format!("{}:{}", utxo.tx_hash.to_string(), utxo.tx_pos);
 

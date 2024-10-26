@@ -266,9 +266,19 @@ pub fn validate_signature_scheme(
 
     let mut sig_scheme_validation = true;
 
-    for (index, backup_tx) in backup_transactions.iter().enumerate() {
+    for backup_tx in backup_transactions.iter() {
 
-        let statechain_info = statechain_info.statechain_info.get(index).unwrap();
+        let statechain_info = statechain_info.statechain_info
+            .iter()
+            .find(|info| info.tx_n == backup_tx.tx_n);
+
+        if statechain_info.is_none() {
+            println!("statechain_info not found");
+            sig_scheme_validation = false;
+            break;
+        }
+
+        let statechain_info = statechain_info.unwrap();
 
         let is_signature_valid = verify_transaction_signature(&backup_tx.tx, &tx0_hex, fee_rate_tolerance, current_fee_rate_sats_per_byte);
         if is_signature_valid.is_err() {

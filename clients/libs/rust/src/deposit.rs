@@ -23,7 +23,8 @@ pub async fn get_deposit_bitcoin_address(client_config: &ClientConfig, wallet_na
     Ok(aggregated_public_key.aggregate_address)
 }
 
-pub async fn create_tx1(client_config: &ClientConfig, coin: &mut Coin, wallet_netwotk: &str) -> Result<BackupTx> {
+// When sending duplicated coins, the tx_n of the backup_tx must be different
+pub async fn create_tx1(client_config: &ClientConfig, coin: &mut Coin, wallet_netwotk: &str, tx_n: u32) -> Result<BackupTx> {
 
     let to_address = get_user_backup_address(&coin, wallet_netwotk.to_string())?;
 
@@ -61,7 +62,7 @@ pub async fn create_tx1(client_config: &ClientConfig, coin: &mut Coin, wallet_ne
     }
 
     let backup_tx = BackupTx {
-        tx_n: 1,
+        tx_n,
         tx: signed_tx,
         client_public_nonce: coin.public_nonce.as_ref().unwrap().to_string(),
         server_public_nonce: coin.server_public_nonce.as_ref().unwrap().to_string(),

@@ -24,13 +24,13 @@ async fn deposit(amount_in_sats: u32, client_config: &ClientConfig, deposit_addr
     Ok(())
 }
 
-fn validate_backup_transactions(backup_transactions: &Vec<BackupTx>, confirmed_coin: &Coin, interval: u32) -> Result<()> {
+fn validate_backup_transactions(backup_transactions: &Vec<BackupTx>, interval: u32) -> Result<()> {
     let first_backup_outpoint = mercuryrustlib::get_previous_outpoint(&backup_transactions[0])?;
 
-    assert!(first_backup_outpoint.txid == confirmed_coin.utxo_txid.clone().unwrap() && first_backup_outpoint.vout == confirmed_coin.utxo_vout.unwrap());
+    
 
-    let mut current_txid = String::new();
-    let mut current_vout = 0u32;
+    let mut current_txid: Option<String> = None;
+    let mut current_vout: Option<u32> = None;
     let mut current_tx_n = 0u32;
     let mut previous_lock_time = 0u32;
 
@@ -38,22 +38,15 @@ fn validate_backup_transactions(backup_transactions: &Vec<BackupTx>, confirmed_c
         let outpoint = mercuryrustlib::get_previous_outpoint(&backup_tx)?;
 
         let current_lock_time = mercuryrustlib::get_blockheight(&backup_tx)?;
-        
-        if backup_tx.tx_n > 1 {
-            assert!(current_txid == outpoint.txid && current_vout == outpoint.vout);
+
+        if current_txid.is_some() && current_vout.is_some()  {
+            assert!(current_txid.unwrap() == outpoint.txid && current_vout.unwrap() == outpoint.vout);
             assert!(current_lock_time == previous_lock_time - interval);
-        } else {
-            assert!(current_txid != outpoint.txid || current_vout != outpoint.vout);
-        }
+            assert!(backup_tx.tx_n > current_tx_n);
+        } 
 
-        if current_txid == outpoint.txid && current_vout == outpoint.vout {
-            assert!(backup_tx.tx_n == current_tx_n + 1);
-        } else {
-            assert!(backup_tx.tx_n == 1);
-        }
-
-        current_txid = outpoint.txid;
-        current_vout = outpoint.vout;
+        current_txid = Some(outpoint.txid);
+        current_vout = Some(outpoint.vout);
         current_tx_n = backup_tx.tx_n;
         previous_lock_time = current_lock_time;
     }
@@ -155,12 +148,51 @@ async fn basic_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2:
 
     let backup_transactions = mercuryrustlib::sqlite_manager::get_backup_txs(&client_config.pool, &wallet1.name, &statechain_id).await?;
 
+    /* for backup_tx in backup_transactions.iter() {
+        let tx_outpoint = mercuryrustlib::get_previous_outpoint(&backup_tx)?;
+        println!("statechain_id: {}", statechain_id);
+        println!("txid: {} vout: {}", tx_outpoint.txid, tx_outpoint.vout);
+        println!("tx_n: {}", backup_tx.tx_n);
+        // println!("client_public_nonce: {}", backup_tx.client_public_nonce);
+        // println!("server_public_nonce: {}", backup_tx.server_public_nonce);
+        // println!("client_public_key: {}", backup_tx.client_public_key);
+        // println!("server_public_key: {}", backup_tx.server_public_key);
+        // println!("blinding_factor: {}", backup_tx.blinding_factor);
+        println!("----------------------");
+    } */
+
     let info_config = mercuryrustlib::utils::info_config(&client_config).await?;
 
-    validate_backup_transactions(&backup_transactions, &new_coin, info_config.interval)?;
-
     let split_backup_transactions = mercuryrustlib::transfer_receiver::split_backup_transactions(&backup_transactions);
-    validate_split_backup_transactions(&backup_transactions, &split_backup_transactions)?;
+
+    for (index, bk_txs) in split_backup_transactions.iter().enumerate() {
+        if index == 0 {
+            let first_bkp_tx = bk_txs.first().unwrap();
+            let first_backup_outpoint = mercuryrustlib::get_previous_outpoint(&first_bkp_tx)?;
+            assert!(first_backup_outpoint.txid == new_coin.utxo_txid.clone().unwrap() && first_backup_outpoint.vout == new_coin.utxo_vout.unwrap());
+        }
+        validate_backup_transactions(&bk_txs, info_config.interval)?;
+    }
+
+    /* println!("Grouped Backup Transactions:");
+
+    for backup_txs in grouped_backup_transactions.iter() {
+        for backup_tx in backup_txs.iter() {
+            let tx_outpoint = mercuryrustlib::get_previous_outpoint(&backup_tx)?;
+            println!("statechain_id: {}", statechain_id);
+            println!("txid: {} vout: {}", tx_outpoint.txid, tx_outpoint.vout);
+            println!("tx_n: {}", backup_tx.tx_n);
+            // println!("client_public_nonce: {}", backup_tx.client_public_nonce);
+            // println!("server_public_nonce: {}", backup_tx.server_public_nonce);
+            // println!("client_public_key: {}", backup_tx.client_public_key);
+            // println!("server_public_key: {}", backup_tx.server_public_key);
+            // println!("blinding_factor: {}", backup_tx.blinding_factor);
+            println!("----------------------");
+        }
+    } */
+
+    
+    
 
     // for backup_tx in backup_transactions.iter() {
     //     let tx_outpoint = mercuryrustlib::get_previous_outpoint(&backup_tx)?;

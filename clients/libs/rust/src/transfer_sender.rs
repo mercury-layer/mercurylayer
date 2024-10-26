@@ -6,7 +6,7 @@ use chrono::Utc;
 use mercurylib::{decode_transfer_address, transfer::sender::{create_transfer_signature, create_transfer_update_msg, TransferSenderRequestPayload, TransferSenderResponsePayload}, utils::get_blockheight, wallet::{get_previous_outpoint, Activity, BackupTx, Coin, CoinStatus, Wallet}};
 use electrum_client::ElectrumApi;
 
-pub async fn create_backup_transaction(
+pub async fn create_backup_transactions(
     client_config: &ClientConfig, 
     recipient_address: &str,
     wallet: &mut Wallet,
@@ -107,6 +107,8 @@ pub async fn create_backup_transaction(
     // create backup transaction for every coin
     let backup_transactions = get_backup_txs(&client_config.pool, &wallet.name, &statechain_id).await?;
 
+    let mut new_tx_n = backup_transactions.len() as u32;
+
     for coin in coin_list {
 
         let mut filtered_transactions: Vec<BackupTx> = Vec::new();
@@ -124,13 +126,14 @@ pub async fn create_backup_transaction(
         filtered_transactions.sort_by(|a, b| a.tx_n.cmp(&b.tx_n));
 
         if filtered_transactions.len() == 0 {
-            let bkp_tx1 = create_tx1(client_config, coin, &wallet.network).await?;
+            new_tx_n = new_tx_n + 1;
+            let bkp_tx1 = create_tx1(client_config, coin, &wallet.network, new_tx_n).await?;
             filtered_transactions.push(bkp_tx1);
         }
 
         let qt_backup_tx = filtered_transactions.len() as u32;
 
-        let new_tx_n = qt_backup_tx as u32 + 1;
+        new_tx_n = new_tx_n + 1;
 
         let bkp_tx1 = &filtered_transactions[0];
 
@@ -157,9 +160,10 @@ pub async fn create_backup_transaction(
         coin.status = CoinStatus::IN_TRANSFER;
     }
 
+    new_backup_transactions.sort_by(|a, b| a.tx_n.cmp(&b.tx_n));
+
     Ok(new_backup_transactions)
 }
-
 
 pub async fn execute(
     client_config: &ClientConfig, 
@@ -228,7 +232,7 @@ pub async fn execute(
 
     let transfer_signature = create_transfer_signature(recipient_address, &input_txid, input_vout, &client_seckey)?; 
 
-    let backup_transactions = create_backup_transaction(client_config, recipient_address, &mut wallet, &statechain_id, duplicated_indexes).await?;
+    let backup_transactions = create_backup_transactions(client_config, recipient_address, &mut wallet, &statechain_id, duplicated_indexes).await?;
 
     let transfer_update_msg_request_payload = create_transfer_update_msg(&x1, recipient_address, &coin, &transfer_signature, &backup_transactions)?;
 
