@@ -126,7 +126,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     continue;
                 }
 
-                let message_result = process_encrypted_message2(client_config, &mut coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
+                let message_result = process_encrypted_message(client_config, &mut coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
 
                 if message_result.is_err() {
                     println!("Processing error: {}", message_result.err().unwrap().to_string());
@@ -176,7 +176,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     continue;
                 }
 
-                let message_result = process_encrypted_message2(client_config, &mut new_coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
+                let message_result = process_encrypted_message(client_config, &mut new_coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
 
                 if message_result.is_err() {
                     println!("Processing error: {}", message_result.err().unwrap().to_string());
@@ -360,7 +360,7 @@ async fn validate_encrypted_message(client_config: &ClientConfig, coin: &Coin, e
     Ok(())
 }
 
-async fn process_encrypted_message2(client_config: &ClientConfig, coin: &mut Coin, enc_message: &str, network: &str, wallet_name: &str, info_config: &InfoConfig, blockheight: u32, activities: &mut Vec<Activity>) -> Result<MessageResult> {
+async fn process_encrypted_message(client_config: &ClientConfig, coin: &mut Coin, enc_message: &str, network: &str, wallet_name: &str, info_config: &InfoConfig, blockheight: u32, activities: &mut Vec<Activity>) -> Result<MessageResult> {
 
     let mut transfer_receive_result = MessageResult {
         is_batch_locked: false,
@@ -384,30 +384,11 @@ async fn process_encrypted_message2(client_config: &ClientConfig, coin: &mut Coi
             let statechain_info = utils::get_statechain_info(&transfer_msg.statechain_id, &client_config).await?;   
             let statechain_info = statechain_info.unwrap();
 
-            let current_fee_rate_sats_per_byte = if info_config.fee_rate_sats_per_byte > client_config.max_fee_rate {
-                client_config.max_fee_rate
-            } else {
-                info_config.fee_rate_sats_per_byte
-            };
-
             let (_, tx0_status) = verify_tx0_output_is_unspent_and_confirmed(&client_config.electrum_client, &tx0_outpoint, &tx0_hex, &network, client_config.confirmation_target).await?;
 
-            let previous_lock_time = mercurylib::transfer::receiver::validate_signature_scheme(
-                backup_transactions, 
-                &statechain_info, 
-                &tx0_hex, 
-                blockheight,
-                client_config.fee_rate_tolerance, 
-                current_fee_rate_sats_per_byte,
-                info_config.initlock,
-                info_config.interval);
-        
-            if previous_lock_time.is_err() {
-                let error = previous_lock_time.err().unwrap();
-                return Err(anyhow!("Signature scheme validation failed. Error {}", error.to_string()));
-            }
+            let backup_tx = backup_transactions.last().unwrap();
 
-            let previous_lock_time = previous_lock_time.unwrap();
+            let last_tx_lock_time = mercurylib::utils::get_blockheight(&backup_tx)?;
 
             let transfer_receiver_request_payload = mercurylib::transfer::receiver::create_transfer_receiver_request_payload(&statechain_info, &transfer_msg, &coin)?;
 
@@ -449,7 +430,7 @@ async fn process_encrypted_message2(client_config: &ClientConfig, coin: &mut Coi
             coin.amount = Some(new_key_info.amount);
             coin.utxo_txid = Some(tx0_outpoint.txid.clone());
             coin.utxo_vout = Some(tx0_outpoint.vout);
-            coin.locktime = Some(previous_lock_time);
+            coin.locktime = Some(last_tx_lock_time);
             coin.status = tx0_status;
 
             let date = Utc::now(); // This will get the current date and time in UTC
