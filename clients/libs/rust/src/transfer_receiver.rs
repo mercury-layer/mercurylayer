@@ -119,7 +119,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
 
                 let mut coin = coin.unwrap();
 
-                let is_msg_valid = validate_encrypted_message(client_config, &coin, enc_message, &wallet.network).await;
+                let is_msg_valid = validate_encrypted_message(client_config, &coin, enc_message, &wallet.network, &info_config, blockheight).await;
 
                 if is_msg_valid.is_err() {
                     println!("Validation error: {}", is_msg_valid.err().unwrap().to_string());
@@ -169,7 +169,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
 
                 let mut new_coin = new_coin.unwrap();
 
-                let is_msg_valid = validate_encrypted_message(client_config, &new_coin, enc_message, &wallet.network).await;
+                let is_msg_valid = validate_encrypted_message(client_config, &new_coin, enc_message, &wallet.network, &info_config, blockheight).await;
 
                 if is_msg_valid.is_err() {
                     println!("Validation error: {}", is_msg_valid.err().unwrap().to_string());
@@ -282,7 +282,7 @@ pub fn split_backup_transactions(backup_transactions: &Vec<BackupTx>) -> Vec<Vec
     result
 }
 
-async fn validate_encrypted_message(client_config: &ClientConfig, coin: &Coin, enc_message: &str, network: &str) -> Result<()> {
+async fn validate_encrypted_message(client_config: &ClientConfig, coin: &Coin, enc_message: &str, network: &str, info_config: &InfoConfig, blockheight: u32) -> Result<()> {
 
     let client_auth_key = coin.auth_privkey.clone();
     let new_user_pubkey = coin.user_pubkey.clone();
@@ -333,6 +333,27 @@ async fn validate_encrypted_message(client_config: &ClientConfig, coin: &Coin, e
 
         if !is_tx0_output_unspent {
             return Err(anyhow::anyhow!("tx0 output is spent or not confirmed".to_string()));
+        }
+
+        let current_fee_rate_sats_per_byte = if info_config.fee_rate_sats_per_byte > client_config.max_fee_rate {
+            client_config.max_fee_rate
+        } else {
+            info_config.fee_rate_sats_per_byte
+        };
+
+        let previous_lock_time = mercurylib::transfer::receiver::validate_signature_scheme(
+            backup_transactions, 
+            &statechain_info, 
+            &tx0_hex, 
+            blockheight,
+            client_config.fee_rate_tolerance, 
+            current_fee_rate_sats_per_byte,
+            info_config.initlock,
+            info_config.interval);
+    
+        if previous_lock_time.is_err() {
+            let error = previous_lock_time.err().unwrap();
+            return Err(anyhow!("Signature scheme validation failed. Error {}", error.to_string()));
         }
     }
 
