@@ -266,6 +266,20 @@ pub async fn update_coins(client_config: &ClientConfig, wallet_name: &str) -> Re
 
     wallet.coins.extend(duplicated_coins);
 
+    // invalidate duplicated coins that were not transferred
+    for i in 0..wallet.coins.len() {
+        if wallet.coins[i].status == CoinStatus::DUPLICATED {
+            let is_transferred = (0..wallet.coins.len()).any(|j| 
+                i != j && // Skip comparing with self
+                wallet.coins[j].statechain_id == wallet.coins[i].statechain_id && 
+                wallet.coins[j].status == CoinStatus::TRANSFERRED
+            );
+            if is_transferred {
+                wallet.coins[i].status = CoinStatus::INVALIDATED;
+            }
+        }
+    }
+
     update_wallet(&client_config.pool, &wallet).await?;
 
     Ok(())

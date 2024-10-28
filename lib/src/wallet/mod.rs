@@ -121,6 +121,7 @@ pub enum CoinStatus {
     TRANSFERRED, // the coin was transferred
     WITHDRAWN, // the coin was withdrawn
     DUPLICATED, // the coin was duplicated
+    INVALIDATED, // the coin was invalidated (duplicated but not transferred)
 }
 
 impl fmt::Display for CoinStatus {
@@ -136,6 +137,7 @@ impl fmt::Display for CoinStatus {
             Self::TRANSFERRED => "TRANSFERRED",
             Self::WITHDRAWN => "WITHDRAWN",
             Self::DUPLICATED => "DUPLICATED",
+            Self::INVALIDATED => "INVALIDATED",
         })
     }
 }
@@ -166,6 +168,7 @@ impl FromStr for CoinStatus {
             "TRANSFERRED" => Ok(CoinStatus::TRANSFERRED),
             "WITHDRAWN" => Ok(CoinStatus::WITHDRAWN),
             "DUPLICATED" => Ok(CoinStatus::DUPLICATED),
+            "INVALIDATED" => Ok(CoinStatus::INVALIDATED),
             _ => Err(CoinStatusParseError {}),
         }
     }

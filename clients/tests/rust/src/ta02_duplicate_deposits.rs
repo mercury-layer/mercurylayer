@@ -181,7 +181,7 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
     let wallet1: mercuryrustlib::Wallet = mercuryrustlib::sqlite_manager::get_wallet(&client_config.pool, &wallet1.name).await?;
 
     let transferred_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::TRANSFERRED);
-    let duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::DUPLICATED);
+    let duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::INVALIDATED);
 
     assert!(transferred_coin.is_some());
     assert!(duplicated_coin.is_some());
@@ -200,10 +200,10 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let error_msg = result.err().unwrap().to_string();
 
-    assert!(error_msg == "Signature does not match authentication key.");
+    // assert!(error_msg == "Signature does not match authentication key.");
 
-
-
+    assert!(error_msg == "No duplicated coins associated with this statechain ID and index 1 were found");
+    
     Ok(())
 }
 
