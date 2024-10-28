@@ -1,7 +1,7 @@
 use std::{env, process::Command, thread, time::Duration};
 
 use anyhow::{Result, Ok};
-use mercuryrustlib::{client_config::ClientConfig, BackupTx, Coin, CoinStatus, Wallet};
+use mercuryrustlib::{client_config::ClientConfig, BackupTx, CoinStatus, Wallet};
 
 use crate::{bitcoin_core, electrs};
 
@@ -25,10 +25,6 @@ async fn deposit(amount_in_sats: u32, client_config: &ClientConfig, deposit_addr
 }
 
 fn validate_backup_transactions(backup_transactions: &Vec<BackupTx>, interval: u32) -> Result<()> {
-    let first_backup_outpoint = mercuryrustlib::get_previous_outpoint(&backup_transactions[0])?;
-
-    
-
     let mut current_txid: Option<String> = None;
     let mut current_vout: Option<u32> = None;
     let mut current_tx_n = 0u32;
@@ -52,31 +48,6 @@ fn validate_backup_transactions(backup_transactions: &Vec<BackupTx>, interval: u
     }
 
     Ok(())
-}
-
-fn validate_split_backup_transactions(
-    backup_transactions: &[BackupTx],
-    split_backup_transactions: &[Vec<BackupTx>]
-) -> Result<()> {
-    // Flatten nested iterations using Iterator::flatten()
-    split_backup_transactions
-        .iter()
-        .flatten()
-        .zip(backup_transactions)
-        .try_for_each(|(split_tx, original_tx)| {
-            // Get both outpoints
-            let original_outpoint = mercuryrustlib::get_previous_outpoint(original_tx)?;
-            let split_outpoint = mercuryrustlib::get_previous_outpoint(split_tx)?;
-
-            // Validate outpoints match
-            assert!(
-                original_outpoint.txid == split_outpoint.txid 
-                && original_outpoint.vout == split_outpoint.vout
-            );
-            assert!(split_tx.tx_n == original_tx.tx_n);
-            
-            Ok(())
-        })
 }
 
 async fn basic_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: &Wallet)  -> Result<()> {

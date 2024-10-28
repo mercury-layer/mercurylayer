@@ -126,7 +126,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     continue;
                 }
 
-                let message_result = process_encrypted_message(client_config, &mut coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
+                let message_result = process_encrypted_message(client_config, &mut coin, enc_message, &wallet.network, &wallet.name, &mut temp_activities).await;
 
                 if message_result.is_err() {
                     println!("Processing error: {}", message_result.err().unwrap().to_string());
@@ -176,7 +176,7 @@ pub async fn execute(client_config: &ClientConfig, wallet_name: &str) -> Result<
                     continue;
                 }
 
-                let message_result = process_encrypted_message(client_config, &mut new_coin, enc_message, &wallet.network, &wallet.name, &info_config, blockheight, &mut temp_activities).await;
+                let message_result = process_encrypted_message(client_config, &mut new_coin, enc_message, &wallet.network, &wallet.name, &mut temp_activities).await;
 
                 if message_result.is_err() {
                     println!("Processing error: {}", message_result.err().unwrap().to_string());
@@ -360,7 +360,7 @@ async fn validate_encrypted_message(client_config: &ClientConfig, coin: &Coin, e
     Ok(())
 }
 
-async fn process_encrypted_message(client_config: &ClientConfig, coin: &mut Coin, enc_message: &str, network: &str, wallet_name: &str, info_config: &InfoConfig, blockheight: u32, activities: &mut Vec<Activity>) -> Result<MessageResult> {
+async fn process_encrypted_message(client_config: &ClientConfig, coin: &mut Coin, enc_message: &str, network: &str, wallet_name: &str, activities: &mut Vec<Activity>) -> Result<MessageResult> {
 
     let mut transfer_receive_result = MessageResult {
         is_batch_locked: false,
