@@ -191,23 +191,23 @@ describe('TA02 - Duplicated Deposits', () => {
             coin.status == CoinStatus.TRANSFERRED
         );
         
-        duplicatedCoin = coins.find(coin => 
+        let invalidatedCoin = coins.find(coin => 
             coin.statechain_id === statechainId && 
-            coin.status == CoinStatus.DUPLICATED
+            coin.status == CoinStatus.INVALIDATED
         );
 
         expect(transferredCoin).to.not.be.null;
         expect(transferredCoin.duplicate_index).to.equal(0);
 
-        expect(duplicatedCoin).to.not.be.null;
-        expect(duplicatedCoin.duplicate_index).to.equal(1);
+        expect(invalidatedCoin).to.not.be.null;
+        expect(invalidatedCoin.duplicate_index).to.equal(1);
 
         try {
             const withdrawAddress = "bcrt1qn5948np2j8t68xgpceneg3ua4wcwhwrsqj8scv";
             await mercuryweblib.withdrawCoin(clientConfig, wallet1.name, statechainId, withdrawAddress, null, 1);
         } catch (error) {
-            // expect(error.message).to.equal("Signature does not match authentication key.");
-            expect(error.message).to.equal("Request failed with status code 401");
+            expect(error.message).to.equal("No duplicated coins associated with this statechain ID and index 1 were found");
+            // expect(error.message).to.equal("Request failed with status code 401");
         }
     });
 }, 100000);

@@ -46,7 +46,16 @@ const checkDeposit = async (clientConfig, coin, walletNetwork) => {
         const utxo_txid = utxo.txid;
         const utxo_vout = utxo.vout;
 
-        const backup_tx = await deposit.createTx1(clientConfig, coin, walletNetwork, utxo_txid, utxo_vout);
+        if (coin.status !== CoinStatus.INITIALISED) {
+            throw new Error(`The coin with the aggregated address ${aggregated_address} is not in the INITIALISED state`);
+        }
+
+    
+        coin.utxo_txid = utxo_txid;
+        coin.utxo_vout = utxo_vout;
+        coin.status = CoinStatus.IN_MEMPOOL;
+
+        const backup_tx = await deposit.createTx1(clientConfig, coin, walletNetwork, 1);
 
         const activity_utxo = `${utxo_txid}:${utxo_vout}`;
 
@@ -221,7 +230,7 @@ const updateCoins = async (clientConfig, walletName) => {
 
     await initWasm(wasmUrl);
 
-    let wallet = storageManager.getItem(walletName);
+    let wallet = storageManager.getWallet(walletName);
 
     const network = wallet.network;
 
@@ -234,7 +243,7 @@ const updateCoins = async (clientConfig, walletName) => {
 
             if (depositResult) {
                 wallet.activities.push(depositResult.activity);
-                storageManager.setItem(coin.statechain_id, [depositResult.backup_tx], false);
+                storageManager.createBackupTransactions(wallet.name, coin.statechain_id, [depositResult.backup_tx])
             }
         } else if (coin.status === CoinStatus.IN_TRANSFER) {
             let is_transferred = await checkTransfer(clientConfig, coin);
@@ -254,7 +263,23 @@ const updateCoins = async (clientConfig, walletName) => {
     const duplicatedCoins = await checkForDuplicated(clientConfig, wallet.coins);
     wallet.coins = [...wallet.coins, ...duplicatedCoins];
 
-    storageManager.setItem(wallet.name, wallet, true);
+    // invalidate duplicated coins that were not transferred
+    for (let i = 0; i < wallet.coins.length; i++) {
+        if (wallet.coins[i].status === CoinStatus.DUPLICATED) {
+            const is_transferred = wallet.coins.some((coin, j) => 
+                i !== j && // Skip comparing with self
+                coin.statechain_id === wallet.coins[i].statechain_id &&
+                coin.locktime === wallet.coins[i].locktime &&
+                coin.status === CoinStatus.TRANSFERRED
+            );
+            
+            if (is_transferred) {
+                wallet.coins[i].status = CoinStatus.INVALIDATED;
+            }
+        }
+    }
+
+    storageManager.updateWallet(wallet);
 }
 
 export default { updateCoins }

@@ -264,7 +264,7 @@ export function latestBackuptxPaysToUserpubkey(backup_transactions: any, coin: a
 */
 export function duplicateCoinToInitializedState(walletJson: any, authPubkey: string): any;
 /**
-* @param {any} transfer_msg
+* @param {any} backup_transactions
 * @param {any} statechain_info
 * @param {string} tx0_hex
 * @param {number} current_blockheight
@@ -274,7 +274,18 @@ export function duplicateCoinToInitializedState(walletJson: any, authPubkey: str
 * @param {number} interval
 * @returns {any}
 */
-export function validateSignatureScheme(transfer_msg: any, statechain_info: any, tx0_hex: string, current_blockheight: number, fee_rate_tolerance: number, current_fee_rate_sats_per_byte: number, lockheight_init: number, interval: number): any;
+export function validateSignatureScheme(backup_transactions: any, statechain_info: any, tx0_hex: string, current_blockheight: number, fee_rate_tolerance: number, current_fee_rate_sats_per_byte: number, lockheight_init: number, interval: number): any;
+/**
+* @param {any} backup_tx
+* @returns {any}
+*/
+export function getPreviousOutpoint(backup_tx: any): any;
+/**
+* @param {string} tx0_hex
+* @param {any} tx_outpoint
+* @returns {number}
+*/
+export function getAmountFromTx0(tx0_hex: string, tx_outpoint: any): number;
 /**
 * @returns {any}
 */

@@ -7,7 +7,7 @@ const createPreImage  = async (clientConfig, walletName, statechainId) => {
 
     const batchId = uuidv4();
 
-    const wallet = storageManager.getItem(walletName);
+    const wallet = storageManager.getWallet(walletName);
 
     const coinsWithStatechainId = wallet.coins.filter(c => {
         return c.statechain_id === statechainId
@@ -55,7 +55,7 @@ const sendPaymentHash = async (clientConfig, paymentHashPayload) => {
 
 const confirmPendingInvoice = async (clientConfig, walletName, statechainId) => {
 
-    const wallet = storageManager.getItem(walletName);
+    const wallet = storageManager.getWallet(walletName);
 
     const coinsWithStatechainId = wallet.coins.filter(c => {
         return c.statechain_id === statechainId
@@ -84,7 +84,7 @@ const confirmPendingInvoice = async (clientConfig, walletName, statechainId) => 
 
 const retrievePreImage = async (clientConfig, walletName, statechainId, batchId) => {
 
-    const wallet = storageManager.getItem(walletName);
+    const wallet = storageManager.getWallet(walletName);
 
     const coinsWithStatechainId = wallet.coins.filter(c => {
         return c.statechain_id === statechainId

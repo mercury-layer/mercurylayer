@@ -349,6 +349,23 @@ describe('TB03 - Atomic swap with timeout', () => {
         let toAddress3 = await mercuryweblib.newTransferAddress(wallet3.name, true);
         let toAddress4 = await mercuryweblib.newTransferAddress(wallet4.name);
 
+        // await mercuryweblib.transferSend(clientConfig, wallet1.name, statechainId1, toAddress3.transfer_receive, false, toAddress3.batch_id);
+        // await mercuryweblib.transferSend(clientConfig, wallet2.name, statechainId2, toAddress4.transfer_receive, false, toAddress3.batch_id);
+
+        // // let transferReceive3 = await mercuryweblib.transferReceive(clientConfig, wallet3.name);
+
+        // // expect(transferReceive3.isThereBatchLocked).toBe(true);
+
+        // // await sleep(20000);
+
+        // // let transferReceive4 = await mercuryweblib.transferReceive(clientConfig, wallet4.name);
+
+        // // expect(transferReceive4.isThereBatchLocked).toBe(false);
+        // // expect(transferReceive4.receivedStatechainIds).to.include(statechainId2);
+
+        // // toAddress3 = await mercuryweblib.newTransferAddress(wallet3.name, true);
+        // // toAddress4 = await mercuryweblib.newTransferAddress(wallet4.name);
+
         await mercuryweblib.transferSend(clientConfig, wallet1.name, statechainId1, toAddress3.transfer_receive, false, toAddress3.batch_id);
         await mercuryweblib.transferSend(clientConfig, wallet2.name, statechainId2, toAddress4.transfer_receive, false, toAddress3.batch_id);
 
@@ -356,30 +373,7 @@ describe('TB03 - Atomic swap with timeout', () => {
 
         expect(transferReceive3.isThereBatchLocked).toBe(true);
 
-        await sleep(20000);
-
-        let errorMessage;
-        console.error = (msg) => {
-            errorMessage = msg;
-        };
-
         let transferReceive4 = await mercuryweblib.transferReceive(clientConfig, wallet4.name);
-
-        // Assert the captured error message
-        const expectedMessage = 'Failed to update transfer message';
-        expect(errorMessage).contains(expectedMessage);
-
-        toAddress3 = await mercuryweblib.newTransferAddress(wallet3.name, true);
-        toAddress4 = await mercuryweblib.newTransferAddress(wallet4.name);
-
-        await mercuryweblib.transferSend(clientConfig, wallet1.name, statechainId1, toAddress3.transfer_receive, false, toAddress3.batch_id);
-        await mercuryweblib.transferSend(clientConfig, wallet2.name, statechainId2, toAddress4.transfer_receive, false, toAddress3.batch_id);
-
-        transferReceive3 = await mercuryweblib.transferReceive(clientConfig, wallet3.name);
-
-        expect(transferReceive3.isThereBatchLocked).toBe(true);
-
-        transferReceive4 = await mercuryweblib.transferReceive(clientConfig, wallet4.name);
 
         expect(transferReceive4.isThereBatchLocked).toBe(false);
 

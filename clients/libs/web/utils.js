@@ -1,4 +1,7 @@
 import axios from 'axios';
+import initWasm from 'mercury-wasm';
+import wasmUrl from 'mercury-wasm/mercury_wasm_bg.wasm?url'
+import * as mercury_wasm from 'mercury-wasm';
 
 const infoConfig = async (clientConfig) => {
 
@@ -67,4 +70,14 @@ const getStatechainInfo = async (clientConfig, statechainId) => {
     }
 }
 
-export default { infoConfig, createActivity, completeWithdraw, getStatechainInfo }
+async function getPreviousOutpoint(backupTx) {
+    await initWasm(wasmUrl);
+    return mercury_wasm.getPreviousOutpoint(backupTx);
+}
+
+async function getBlockheight(backupTx) {
+    await initWasm(wasmUrl);
+    return mercury_wasm.getBlockheight(backupTx);
+}
+
+export default { infoConfig, createActivity, completeWithdraw, getStatechainInfo, getPreviousOutpoint, getBlockheight };
