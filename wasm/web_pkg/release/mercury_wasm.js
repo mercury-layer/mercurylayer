@@ -817,7 +817,7 @@ export function duplicateCoinToInitializedState(walletJson, authPubkey) {
 }
 
 /**
-* @param {any} transfer_msg
+* @param {any} backup_transactions
 * @param {any} statechain_info
 * @param {string} tx0_hex
 * @param {number} current_blockheight
@@ -827,11 +827,32 @@ export function duplicateCoinToInitializedState(walletJson, authPubkey) {
 * @param {number} interval
 * @returns {any}
 */
-export function validateSignatureScheme(transfer_msg, statechain_info, tx0_hex, current_blockheight, fee_rate_tolerance, current_fee_rate_sats_per_byte, lockheight_init, interval) {
+export function validateSignatureScheme(backup_transactions, statechain_info, tx0_hex, current_blockheight, fee_rate_tolerance, current_fee_rate_sats_per_byte, lockheight_init, interval) {
     const ptr0 = passStringToWasm0(tx0_hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.validateSignatureScheme(addHeapObject(transfer_msg), addHeapObject(statechain_info), ptr0, len0, current_blockheight, fee_rate_tolerance, current_fee_rate_sats_per_byte, lockheight_init, interval);
+    const ret = wasm.validateSignatureScheme(addHeapObject(backup_transactions), addHeapObject(statechain_info), ptr0, len0, current_blockheight, fee_rate_tolerance, current_fee_rate_sats_per_byte, lockheight_init, interval);
     return takeObject(ret);
+}
+
+/**
+* @param {any} backup_tx
+* @returns {any}
+*/
+export function getPreviousOutpoint(backup_tx) {
+    const ret = wasm.getPreviousOutpoint(addHeapObject(backup_tx));
+    return takeObject(ret);
+}
+
+/**
+* @param {string} tx0_hex
+* @param {any} tx_outpoint
+* @returns {number}
+*/
+export function getAmountFromTx0(tx0_hex, tx_outpoint) {
+    const ptr0 = passStringToWasm0(tx0_hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.getAmountFromTx0(ptr0, len0, addHeapObject(tx_outpoint));
+    return ret >>> 0;
 }
 
 /**

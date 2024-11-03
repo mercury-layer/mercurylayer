@@ -10,6 +10,8 @@ import transfer_receive from './transfer_receive.js';
 import lightningLatch from './lightning-latch.js';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeInvoice } from '../../tests/web/test-utils.js';
+import { util } from 'chai';
+import utils from './utils.js';
 
 const greet = async () => {
   
@@ -26,7 +28,7 @@ const createWallet = async (clientConfig, name) => {
 
   const wallet = await walletManager.createWallet(clientConfig, name);
 
-  storageManager.setItem(name, wallet, false);
+  storageManager.createWallet(wallet);
 
   return wallet;
 }
@@ -45,13 +47,16 @@ const listStatecoins = async (clientConfig, walletName) => {
 
   await coin_status.updateCoins(clientConfig, walletName);
 
-  let wallet = storageManager.getItem(walletName);
+  let wallet = storageManager.getWallet(walletName);
 
   let coins = wallet.coins.map(coin => ({
       statechain_id: coin.statechain_id,
+      utxo_txid: coin.utxo_txid,
+      utxo_vout: coin.utxo_vout,
       amount: coin.amount,
       status: coin.status,
-      adress: coin.address,
+      address: coin.address,
+      aggregated_address: coin.aggregated_address,
       locktime: coin.locktime,
       duplicate_index: coin.duplicate_index
   }));
@@ -88,11 +93,11 @@ const newTransferAddress = async (walletName, generateBatchId) => {
   return res;
 }
 
-const transferSend = async (clientConfig, walletName, statechainId, toAddress, forceSend, batchId) => {
+const transferSend = async (clientConfig, walletName, statechainId, toAddress, forceSend, batchId, duplicatedIndexes) => {
 
   await coin_status.updateCoins(clientConfig, walletName);
 
-  return await transfer_send.execute(clientConfig, walletName, statechainId, toAddress, forceSend, batchId);
+  return await transfer_send.execute(clientConfig, walletName, statechainId, toAddress, forceSend, batchId, duplicatedIndexes);
 }
 
 const transferReceive = async (clientConfig, walletName) => {
@@ -153,5 +158,9 @@ export default {
   confirmPendingInvoice,
   retrievePreImage,
   getPaymentHash,
-  verifyInvoice
-}
+  verifyInvoice,
+  getPreviousOutpoint: utils.getPreviousOutpoint,
+  getBlockheight: utils.getBlockheight,
+  splitBackupTransactions: transfer_receive.splitBackupTransactions,
+  infoConfig: utils.infoConfig,
+};

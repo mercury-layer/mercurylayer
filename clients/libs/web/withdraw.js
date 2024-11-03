@@ -6,9 +6,9 @@ import transaction from './transaction.js';
 
 const execute = async (clientConfig, walletName, statechainId, toAddress, feeRate, duplicatedIndex) => {
 
-    let wallet = storageManager.getItem(walletName);
+    let wallet = storageManager.getWallet(walletName);
 
-    let backupTxs = storageManager.getItem(statechainId);
+    let backupTxs = storageManager.getBackupTransactions(walletName, statechainId);
 
     if (backupTxs.length === 0) {
         throw new Error(`There is no backup transaction for the statechain id ${statechainId}`);
@@ -79,7 +79,7 @@ const execute = async (clientConfig, walletName, statechainId, toAddress, feeRat
 
     wallet.activities.push(activity);
 
-    storageManager.setItem(wallet.name, wallet, true);
+    storageManager.updateWallet(wallet);
 
     const isThereMoreDuplicatedCoins = wallet.coins.some(coin => 
         (coin.status === CoinStatus.DUPLICATED || coin.status === CoinStatus.CONFIRMED) &&

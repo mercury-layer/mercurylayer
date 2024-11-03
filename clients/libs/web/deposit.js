@@ -27,7 +27,7 @@ const getTokenFromServer = async (clientConfig) => {
 
 const getToken = async (clientConfig, walletName) => {
 
-    let wallet = storageManager.getItem(walletName);
+    let wallet = storageManager.getWallet(walletName);
     
     let token = await getTokenFromServer(clientConfig);
 
@@ -36,7 +36,7 @@ const getToken = async (clientConfig, walletName) => {
 
     wallet.tokens.push(token);
 
-    storageManager.setItem(walletName, wallet, true);
+    storageManager.updateWallet(wallet);
 
     return token;
 }
@@ -47,7 +47,7 @@ const init = async (clientConfig, wallet, token_id) => {
 
     wallet.coins.push(coin);
 
-    storageManager.setItem(wallet.name, wallet, true);
+    storageManager.updateWallet(wallet);
 
     let depositMsg1 = mercury_wasm.createDepositMsg1(coin, token_id);
 
@@ -69,14 +69,14 @@ const init = async (clientConfig, wallet, token_id) => {
     coin.signed_statechain_id = depositInitResult.signed_statechain_id;
     coin.server_pubkey = depositInitResult.server_pubkey;
 
-    storageManager.setItem(wallet.name, wallet, true);
+    storageManager.updateWallet(wallet);
 }
 
 const getDepositBitcoinAddress = async (clientConfig, walletName, amount) => {
 
     await initWasm(wasmUrl);
 
-    let wallet = storageManager.getItem(walletName);
+    let wallet = storageManager.getWallet(walletName);
 
     let foundToken = wallet.tokens.find(token => token.confirmed === true && token.spent === false);
 
@@ -96,24 +96,12 @@ const getDepositBitcoinAddress = async (clientConfig, walletName, amount) => {
 
     foundToken.spent = true;
 
-    storageManager.setItem(wallet.name, wallet, true);
+    storageManager.updateWallet(wallet);
 
     return { "deposit_address":  coin.aggregated_address, "statechain_id": coin.statechain_id };
 }
 
-const createTx1 = async (clientConfig, coin, walletNetwork, tx0Hash, tx0Vout) => {
-
-    if (coin.status !== CoinStatus.INITIALISED) {
-        throw new Error(`The coin with the aggregated address ${aggregated_address} is not in the INITIALISED state`);
-    }
-
-    if ('utxo_txid' in coin && 'input_vout' in coin) {
-        throw new Error(`The coin with the aggregated address ${aggregated_address} has already been deposited`);
-    }
-
-    coin.utxo_txid = tx0Hash;
-    coin.utxo_vout = tx0Vout;
-    coin.status = CoinStatus.IN_MEMPOOL;
+const createTx1 = async (clientConfig, coin, walletNetwork, txN) => {
 
     const toAddress = mercury_wasm.getUserBackupAddress(coin, walletNetwork);
     const isWithdrawal = false;
@@ -137,7 +125,7 @@ const createTx1 = async (clientConfig, coin, walletNetwork, tx0Hash, tx0Vout) =>
     );
 
     let backupTx = {
-        tx_n: 1,
+        tx_n: txN,
         tx: signedTx,
         client_public_nonce: coin.public_nonce, 
         server_public_nonce: coin.server_public_nonce,

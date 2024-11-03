@@ -10,9 +10,9 @@ const execute = async (clientConfig, walletName, statechainId, toAddress, feeRat
 
     await initWasm(wasmUrl);
 
-    let wallet = storageManager.getItem(walletName);
+    let wallet = storageManager.getWallet(walletName);
 
-    let backupTxs = storageManager.getItem(statechainId);
+    let backupTxs = storageManager.getBackupTransactions(walletName, statechainId);
 
     if (!feeRate) {
         const response = await axios.get(`${clientConfig.esploraServer}/api/fee-estimates`);
@@ -69,7 +69,7 @@ const execute = async (clientConfig, walletName, statechainId, toAddress, feeRat
     coin.withdrawal_address = toAddress;
     coin.status = CoinStatus.WITHDRAWING;
 
-    storageManager.setItem(walletName, wallet, true);
+    storageManager.updateWallet(wallet);
 
     utils.completeWithdraw(clientConfig, coin.statechain_id, coin.signed_statechain_id);
 

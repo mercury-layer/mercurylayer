@@ -9,6 +9,7 @@ const CoinStatus = {
     TRANSFERRED: "TRANSFERRED", // the coin was transferred
     WITHDRAWN: "WITHDRAWN", // the coin was withdrawn
     DUPLICATED: "DUPLICATED", // the coin was duplicated
+    INVALIDATED: "INVALIDATED", // the coin was invalidated
 };
 
 export default CoinStatus;
