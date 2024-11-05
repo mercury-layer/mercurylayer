@@ -1047,3 +1047,143 @@ describe('TA03 - Multiple Deposits', () => {
         expect(txid).to.be.string;
     });
 }, 5000000000);
+
+describe('TA03 - Multiple Deposits', () => {
+    test("bsend unconfirmed duplicated workflow", async () => {
+
+        localStorage.removeItem("mercury-layer:wallet1_tb03_5");
+        localStorage.removeItem("mercury-layer:wallet2_tb03_5");
+
+        let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb03_5");
+        let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_5");
+
+        await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let amount = 1000;
+        
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+
+        const statechainId = result.statechain_id;
+    
+        let isDepositInMempool = false;
+        let isDepositConfirmed = false;
+        let areBlocksGenerated = false;
+
+        await depositCoin(result.deposit_address, amount);
+
+        while (!isDepositConfirmed) {
+
+            const coins = await mercuryweblib.listStatecoins(clientConfig, wallet1.name);
+    
+            for (let coin of coins) {
+                if (coin.statechain_id === statechainId && coin.status === CoinStatus.IN_MEMPOOL && !isDepositInMempool) {
+                    isDepositInMempool = true;
+                } else if (coin.statechain_id === statechainId && coin.status === CoinStatus.CONFIRMED) {
+                    isDepositConfirmed = true;
+                    break;
+                }
+            }
+
+            if (isDepositInMempool && !areBlocksGenerated) {
+                areBlocksGenerated = true;
+                await generateBlocks(clientConfig.confirmationTarget);
+            }
+            
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        amount = 1000;
+
+        await depositCoin(result.deposit_address, amount);
+
+        await generateBlocks(clientConfig.confirmationTarget);
+
+        while (true) {
+            let coins = await mercuryweblib.listStatecoins(clientConfig, wallet1.name);
+            let duplicatedCoin = coins.find(coin => coin.statechain_id === statechainId && coin.status === CoinStatus.DUPLICATED && coin.duplicate_index == 1);
+            if (duplicatedCoin) {
+                break;
+            }
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        let coins = await mercuryweblib.listStatecoins(clientConfig, wallet1.name);
+
+        const newCoin = coins.find(coin => 
+            coin.statechain_id === statechainId && 
+            coin.status == CoinStatus.CONFIRMED && 
+            coin.duplicate_index == 0
+        );
+        
+        const confirmedDuplicatedCoin = coins.find(coin => 
+            coin.statechain_id === statechainId && 
+            coin.status == CoinStatus.DUPLICATED && 
+            coin.amount == 1000
+        );
+
+        let allDepositsConfirmed = await checkDepositsConfirmation(newCoin.aggregated_address);
+
+        expect(allDepositsConfirmed).to.be.true;
+
+        amount = 2000;
+
+        await depositCoin(result.deposit_address, amount);
+
+        while (true) {
+            let coins = await mercuryweblib.listStatecoins(clientConfig, wallet1.name);
+            let duplicatedCoin = coins.find(coin => coin.statechain_id === statechainId && coin.status === CoinStatus.DUPLICATED && coin.duplicate_index == 2);
+            if (duplicatedCoin) {
+                break;
+            }
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        coins = await mercuryweblib.listStatecoins(clientConfig, wallet1.name);
+        
+        const unconfirmedDuplicatedCoin = coins.find(coin => 
+            coin.statechain_id === statechainId && 
+            coin.status == CoinStatus.DUPLICATED && 
+            coin.amount == 2000
+        );
+
+        expect(newCoin).to.not.be.undefined;
+        expect(confirmedDuplicatedCoin).to.not.be.undefined;
+        expect(unconfirmedDuplicatedCoin).to.not.be.undefined;
+
+        let transferAddress = await mercuryweblib.newTransferAddress(wallet2.name);
+
+        let duplicatedIndexes = [1, 2];
+
+        try {
+            result = await mercuryweblib.transferSend(
+                clientConfig,
+                wallet1.name,
+                statechainId,
+                transferAddress.transfer_receive,
+                true, 
+                null,            
+                duplicatedIndexes
+            );
+        } catch (error) {
+            expect(error.message).to.equal(`The coin with duplicated index ${unconfirmedDuplicatedCoin.duplicate_index} has not yet been confirmed. This transfer cannot be performed.`);
+        }
+
+        await generateBlocks(clientConfig.confirmationTarget);
+
+        allDepositsConfirmed = await checkDepositsConfirmation(newCoin.aggregated_address);
+
+        expect(allDepositsConfirmed).to.be.true;
+
+        result = await mercuryweblib.transferSend(
+            clientConfig,
+            wallet1.name,
+            statechainId,
+            transferAddress.transfer_receive,
+            true, 
+            null,            
+            duplicatedIndexes
+        );
+        expect(result).to.have.property('statechain_id');
+        
+    });
+}, 5000000000);

@@ -100,8 +100,54 @@ async function createBackupTransactions(
         throw new Error("There must be at least one coin with duplicate_index == 0");
     }
 
-     // Move the coin with CONFIRMED status to the first position
-     coinList.sort((a, b) => {
+    for (let coin of coinList) {
+        if (coin.status === 'DUPLICATED') {
+            try {
+                let response = await axios.get(`${clientConfig.esploraServer}/api/address/${coin.aggregated_address}/utxo`);
+                let utxo_list = response.data;
+
+                let utxo = null;
+
+                for (let unspent of utxo_list) {
+                    if (coin.utxo_txid === unspent.txid && coin.utxo_vout === unspent.vout) {
+                        utxo = unspent;
+                        break;
+                    }
+                }
+
+                if (utxo) {
+
+                    let isConfirmed =  false;
+
+                    if (utxo.status.confirmed) {
+                        const response = await axios.get(`${clientConfig.esploraServer}/api/blocks/tip/height`);
+                        const block_header = response.data;
+                        const blockheight = parseInt(block_header, 10);
+
+                        if (isNaN(blockheight)) {
+                            throw new Error(`Invalid block height: ${block_header}`);
+                        }
+
+                        const confirmations = blockheight - parseInt(utxo.status.block_height, 10) + 1;
+
+                        const confirmationTarget = clientConfig.confirmationTarget;
+
+                        isConfirmed = confirmations >= confirmationTarget;
+                    }
+
+                    if (!isConfirmed) {
+                        throw new Error(`The coin with duplicated index ${coin.duplicate_index} has not yet been confirmed. This transfer cannot be performed.`);
+                    }
+                    
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+    }
+                
+    // Move the coin with CONFIRMED status to the first position
+    coinList.sort((a, b) => {
         if (a.status === CoinStatus.CONFIRMED) return -1;
         if (b.status === CoinStatus.CONFIRMED) return 1;
         return 0;
