@@ -73,7 +73,6 @@ async fn check_deposit(client_config: &ClientConfig, coin: &mut Coin, wallet_net
         let activity_utxo = format!("{}:{}", utxo.tx_hash.to_string(), utxo.tx_pos);
 
         let activity = Some(create_activity(&activity_utxo, utxo.value as u32, "deposit"));
-        // return Ok(Some(activity));
 
         deposit_result = Some(DepositResult {
             activity: activity.unwrap(),

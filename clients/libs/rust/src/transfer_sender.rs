@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, str::FromStr};
 
 use crate::{client_config::ClientConfig, deposit::create_tx1, sqlite_manager::{get_backup_txs, get_wallet, update_backup_txs, update_wallet}, transaction::new_transaction, utils::info_config};
 use anyhow::{anyhow, Result};
@@ -88,14 +88,35 @@ pub async fn create_backup_transactions(
         return Err(anyhow!("There must be at least one coin with duplicate_index == 0"));
     }
 
-    // Move the coin with CONFIRMED status to the last position
-    // coin_list.sort_by(|a, b| {
-    //     match (&a.status, &b.status) {
-    //         (CoinStatus::CONFIRMED, _) => Ordering::Greater,
-    //         (_, CoinStatus::CONFIRMED) => Ordering::Less,
-    //         _ => Ordering::Equal,
-    //     }
-    // });
+    for coin in coin_list.iter_mut() {
+        if coin.status == CoinStatus::DUPLICATED {
+            let address = bitcoin::Address::from_str(&coin.aggregated_address.as_ref().unwrap())?.require_network(client_config.network)?;
+            let utxo_list =  client_config.electrum_client.script_list_unspent(&address.script_pubkey())?;
+
+            for unspent in utxo_list {
+                if coin.utxo_txid == Some(unspent.tx_hash.to_string()) && coin.utxo_vout == Some(unspent.tx_pos as u32) {
+                    let mut is_confirmed =  false;
+
+                    if unspent.height > 0 {
+                        let block_header = client_config.electrum_client.block_headers_subscribe_raw()?;
+                        let blockheight = block_header.height;
+
+                        let confirmations = blockheight - unspent.height + 1;
+
+                        if confirmations as u32 >= client_config.confirmation_target {
+                            is_confirmed = true;
+                        }
+                    }
+
+                    if !is_confirmed {
+                        return Err(anyhow!("The coin with duplicated index {} has not yet been confirmed. This transfer cannot be performed.", coin.duplicate_index));
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
 
     // Move the coin with CONFIRMED status to the first position
     coin_list.sort_by(|a, b| {

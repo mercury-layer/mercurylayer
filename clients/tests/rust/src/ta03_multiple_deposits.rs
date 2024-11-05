@@ -17,7 +17,7 @@ async fn deposit(amount_in_sats: u32, client_config: &ClientConfig, deposit_addr
     let mut is_tx_indexed = false;
 
     while !is_tx_indexed {
-        is_tx_indexed = electrs::check_address(client_config, &deposit_address, 1000).await?;
+        is_tx_indexed = electrs::check_address(client_config, &deposit_address, amount_in_sats).await?;
         thread::sleep(Duration::from_secs(1));
     }
 
@@ -461,7 +461,7 @@ async fn multiple_sends_workflow(client_config: &ClientConfig, wallet1: &Wallet,
     Ok(())
 }
 
-async fn send_to_itself_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: &Wallet)  -> Result<()> {
+async fn send_to_itself_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: &Wallet) -> Result<()> {
 
     let amount = 1000;
 
@@ -616,6 +616,82 @@ async fn send_to_itself_workflow(client_config: &ClientConfig, wallet1: &Wallet,
 
 }
 
+async fn send_unconfirmed_duplicated_workflow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: &Wallet) -> Result<()> {
+
+    let amount = 1000;
+
+    let token_id = mercuryrustlib::deposit::get_token(client_config).await?;
+
+    let deposit_address = mercuryrustlib::deposit::get_deposit_bitcoin_address(&client_config, &wallet1.name, &token_id, amount).await?;
+
+    deposit(amount, &client_config, &deposit_address).await?;
+
+    let amount = 1000;
+
+    deposit(amount, &client_config, &deposit_address).await?;
+
+    let amount = 2000;
+
+    let _ = bitcoin_core::sendtoaddress(amount, &deposit_address)?;
+
+    let mut is_tx_indexed = false;
+
+    while !is_tx_indexed {
+        is_tx_indexed = electrs::check_address(client_config, &deposit_address, amount).await?;
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    mercuryrustlib::coin_status::update_coins(&client_config, &wallet1.name).await?;
+    let wallet1: mercuryrustlib::Wallet = mercuryrustlib::sqlite_manager::get_wallet(&client_config.pool, &wallet1.name).await?;
+
+    let new_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.duplicate_index == 0 && coin.status == CoinStatus::CONFIRMED);
+    let confirmed_duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::DUPLICATED && coin.amount == Some(1000));
+    let unconfirmed_duplicated_coin = wallet1.coins.iter().find(|&coin| coin.aggregated_address == Some(deposit_address.clone()) && coin.status == CoinStatus::DUPLICATED && coin.amount == Some(2000));
+
+    assert!(new_coin.is_some());
+    assert!(confirmed_duplicated_coin.is_some());
+    assert!(unconfirmed_duplicated_coin.is_some());
+
+    let unconfirmed_duplicated_coin = unconfirmed_duplicated_coin.unwrap();
+
+    let new_coin = new_coin.unwrap();
+
+    let statechain_id = new_coin.statechain_id.as_ref().unwrap();
+
+    let wallet2_transfer_adress = mercuryrustlib::transfer_receiver::new_transfer_address(&client_config, &wallet2.name).await?;
+
+    let batch_id = None;
+
+    let force_send = true;
+
+    let duplicated_indexes = vec![1, 2];
+
+    // try to send the unconfirmed duplicated coin
+    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, &statechain_id, Some(duplicated_indexes), force_send, batch_id).await;
+
+    assert!(result.is_err());
+
+    let error_message = result.err().unwrap().to_string();
+
+    let expected_error_message = format!("The coin with duplicated index {} has not yet been confirmed. This transfer cannot be performed.", unconfirmed_duplicated_coin.duplicate_index);
+
+    assert!(error_message.contains(expected_error_message.as_str()));
+
+    let core_wallet_address = bitcoin_core::getnewaddress()?;
+    let remaining_blocks = client_config.confirmation_target;
+    let _ = bitcoin_core::generatetoaddress(remaining_blocks, &core_wallet_address)?;
+
+    let batch_id = None;
+
+    let duplicated_indexes = vec![1, 2];
+
+    let result = mercuryrustlib::transfer_sender::execute(&client_config, &wallet2_transfer_adress, &wallet1.name, &statechain_id, Some(duplicated_indexes), force_send, batch_id).await;
+
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
 pub async fn execute() -> Result<()> {
 
     let _ = Command::new("rm").arg("wallet.db").arg("wallet.db-shm").arg("wallet.db-wal").output().expect("failed to execute process");
@@ -649,6 +725,8 @@ pub async fn execute() -> Result<()> {
     multiple_sends_workflow(&client_config, &wallet1, &wallet2, &wallet3).await?;
 
     send_to_itself_workflow(&client_config, &wallet1, &wallet2).await?;
+
+    send_unconfirmed_duplicated_workflow(&client_config, &wallet1, &wallet2).await?;
 
     println!("TA03 - Test \"Multiple Deposits in the Same Adress\" completed successfully");
 
