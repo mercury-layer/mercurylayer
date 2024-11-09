@@ -17,6 +17,7 @@ add_executable(MercuryLockbox src/main.cpp)
 # target_include_directories(MercuryLockbox PRIVATE include)
 
 add_library(LockboxLibrary src/library.cpp)
+target_include_directories(MercuryLockbox PRIVATE include)
 target_include_directories(LockboxLibrary PUBLIC include)
 
 find_package(Crow)
