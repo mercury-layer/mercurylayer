@@ -20,7 +20,24 @@ add_library(LockboxLibrary src/library.cpp)
 target_include_directories(MercuryLockbox PRIVATE include)
 target_include_directories(LockboxLibrary PUBLIC include)
 
+include(FetchContent)
+FetchContent_Declare(
+    tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG v3.4.0
+)
+FetchContent_MakeAvailable(tomlplusplus)
+
+FetchContent_Declare(
+    libpqxx
+    GIT_REPOSITORY https://github.com/jtv/libpqxx.git
+    GIT_TAG        7.8.1
+)
+
+FetchContent_MakeAvailable(libpqxx)
+
 find_package(Crow)
+find_package(cpr REQUIRED)
 
 # Link the library to the main executable
-target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow)
+target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus)
