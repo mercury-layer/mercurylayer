@@ -7,8 +7,7 @@ To run:
 3. Then run the commands below:
 
 ```bash
-$ mkdir -p build
-$ cd build
+$ mkdir -p build && cd build
 $ cmake --preset=vcpkg ..
 $ cmake --build .
 ```
