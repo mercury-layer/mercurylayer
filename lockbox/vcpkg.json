@@ -7,7 +7,7 @@
     {
       "name": "google-cloud-cpp", 
       "default-features": false, 
-      "features": ["storage", "kms"]
+      "features": ["storage", "kms", "secretmanager"]
     }
   ]
 }

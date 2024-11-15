@@ -40,6 +40,7 @@ find_package(Crow)
 find_package(cpr REQUIRED)
 find_package(google_cloud_cpp_storage REQUIRED)
 find_package(google_cloud_cpp_kms REQUIRED)
+find_package(google_cloud_cpp_secretmanager REQUIRED)
 
 # Link the library to the main executable
-target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms)
+target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager)
