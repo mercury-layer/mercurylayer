@@ -51,17 +51,26 @@ void test_kms() {
 void test_secret() {
 
     auto project_id = "mercury-441416";
+    auto project_number = "100600525477";
+    auto key_name = "key";
+
     namespace secretmanager = ::google::cloud::secretmanager_v1;
     auto client = secretmanager::SecretManagerServiceClient(
         secretmanager::MakeSecretManagerServiceConnection());
 
-    auto const parent = std::string("projects/") + project_id;
+    /* auto const parent = std::string("projects/") + project_id;
     for (auto secret : client.ListSecrets(parent)) {
         if (!secret) throw std::move(secret).status();
         std::cout << secret->DebugString() << "\n";
-    }
+    } */
 
+    auto const parent = std::string("projects/") + project_number;
+    auto secret_name = parent + "/secrets/" + key_name;
+    auto secret = client.GetSecret(secret_name);
+    if (!secret) throw std::move(secret).status();
+    std::cout << secret->DebugString() << "\n";
 
+    
 }
 
 
