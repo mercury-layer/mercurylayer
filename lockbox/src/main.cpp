@@ -1,5 +1,6 @@
 #include <crow.h>
 #include "library.h"
+#include "server.h"
 #include "CLI11.hpp"
 #include <toml++/toml.h>
 
@@ -140,14 +141,6 @@ int main(int argc, char *argv[]) {
 
     CLI11_PARSE(cli_app, argc, argv);
 
-    // Initialize Crow HTTP server
-    crow::SimpleApp app;
-
-    // Define a simple route
-    CROW_ROUTE(app, "/")([](){
-        return "Hello, Crow!";
-    });
-
     int result = add(3, 4);
     std::cout << "The result of add(3, 4) is: " << result << std::endl;
 
@@ -155,8 +148,7 @@ int main(int argc, char *argv[]) {
     std::string seed_dir = config["intel_sgx"]["seed_dir"].as_string()->get();
     std::cout << "seed_dir: " << seed_dir << std::endl;
 
-    // Start the server on port 18080
-    app.port(18080).multithreaded().run();
+    lockbox::start_server();
 
     return 0;
 }
