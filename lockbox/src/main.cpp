@@ -1,10 +1,11 @@
 #include <crow.h>
 #include "library.h"
+#include "key_manager.h"
 #include "server.h"
 #include "CLI11.hpp"
 #include <toml++/toml.h>
 
-#include "google/cloud/kms/v1/key_management_client.h"
+/* #include "google/cloud/kms/v1/key_management_client.h"
 #include "google/cloud/secretmanager/v1/secret_manager_client.h"
 #include "google/cloud/location.h"
 #include <iostream>
@@ -60,11 +61,11 @@ void test_secret() {
     auto client = secretmanager::SecretManagerServiceClient(
         secretmanager::MakeSecretManagerServiceConnection());
 
-    /* auto const parent = std::string("projects/") + project_id;
-    for (auto secret : client.ListSecrets(parent)) {
-        if (!secret) throw std::move(secret).status();
-        std::cout << secret->DebugString() << "\n";
-    } */
+    // auto const parent = std::string("projects/") + project_id;
+    // for (auto secret : client.ListSecrets(parent)) {
+    //     if (!secret) throw std::move(secret).status();
+    //     std::cout << secret->DebugString() << "\n";
+    // }
 
     auto const parent = std::string("projects/") + project_number;
     auto secret_name = parent + "/secrets/" + key_name;
@@ -115,7 +116,7 @@ std::string decrypt_secret(std::string const& encrypted_secret) {
     if (!decrypt_response) throw std::move(decrypt_response).status();
     auto plaintext = decrypt_response->plaintext();
     return plaintext;
-}
+} */
 
 int main(int argc, char *argv[]) {
 
@@ -123,16 +124,16 @@ int main(int argc, char *argv[]) {
 
     test_secret(); */
 
-    auto encrypted_secret = get_encrypted_secret();
+    auto encrypted_secret = key_manager::get_encrypted_secret();
     std::cout << "encrypted secret: " << encrypted_secret << "\n";
 
     std::string decrypted_secret;
 
-    try {
-        decrypted_secret = decrypt_secret(encrypted_secret);
-    } catch (google::cloud::Status const& status) {
-        std::cerr << "google::cloud::Status thrown: " << status << "\n";
-    }
+    // try {
+        decrypted_secret = key_manager::decrypt_secret(encrypted_secret);
+    // } catch (google::cloud::Status const& status) {
+    //     std::cerr << "google::cloud::Status thrown: " << status << "\n";
+    // }
 
     std::cout << "decrypted secret: " << decrypted_secret << "\n";
 
