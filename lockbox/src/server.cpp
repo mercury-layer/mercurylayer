@@ -1,3 +1,4 @@
+#include "server.h"
 #include <crow.h>
 
 namespace lockbox {

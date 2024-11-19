@@ -4,9 +4,10 @@
 #include "google/cloud/secretmanager/v1/secret_manager_client.h"
 #include "google/cloud/location.h"
 #include <iostream>
+#include "utils.h"
 
 namespace key_manager {
-    
+
     std::string get_encrypted_secret() {
         auto project_id = "mercury-441416";
         auto project_number = "100600525477";
@@ -42,6 +43,19 @@ namespace key_manager {
         if (!decrypt_response) throw std::move(decrypt_response).status();
         auto plaintext = decrypt_response->plaintext();
         return plaintext;
+    }
+
+    std::vector<uint8_t> get_sealing_secret() {
+        auto encrypted_secret = key_manager::get_encrypted_secret();
+        std::string decrypted_secret;
+        try {
+            decrypted_secret = key_manager::decrypt_secret(encrypted_secret);
+        } catch (google::cloud::Status const& status) {
+            std::cerr << "google::cloud::Status thrown: " << status << "\n";
+        }
+
+        std::vector<unsigned char> serialized_secret = utils::ParseHex(decrypted_secret);
+        return serialized_secret;
     }
 
 } // namespace key_manager

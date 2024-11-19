@@ -4,6 +4,7 @@
 #include "server.h"
 #include "CLI11.hpp"
 #include <toml++/toml.h>
+#include "utils.h"
 
 /* #include "google/cloud/kms/v1/key_management_client.h"
 #include "google/cloud/secretmanager/v1/secret_manager_client.h"
@@ -124,18 +125,11 @@ int main(int argc, char *argv[]) {
 
     test_secret(); */
 
-    auto encrypted_secret = key_manager::get_encrypted_secret();
-    std::cout << "encrypted secret: " << encrypted_secret << "\n";
+    std::vector<uint8_t> sealing_secret = key_manager::get_sealing_secret();
 
-    std::string decrypted_secret;
+    std::string sealing_secret_hex = utils::key_to_string(sealing_secret.data(), sealing_secret.size());
 
-    // try {
-        decrypted_secret = key_manager::decrypt_secret(encrypted_secret);
-    // } catch (google::cloud::Status const& status) {
-    //     std::cerr << "google::cloud::Status thrown: " << status << "\n";
-    // }
-
-    std::cout << "decrypted secret: " << decrypted_secret << "\n";
+    std::cout << "sealing_secret_hex: " << sealing_secret_hex << std::endl;
 
     CLI::App cli_app{"Lockbox Server"};
     cli_app.set_version_flag("--version", std::string("0.0.1"));
