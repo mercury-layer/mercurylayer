@@ -2,18 +2,12 @@
 #include <crow.h>
 #include <openssl/rand.h>
 #include "utils.h"
+#include "enclave.h"
 
 namespace lockbox {
     void start_server() {
 
-        unsigned char key[32];
-        if (RAND_bytes(key, sizeof(key)) != 1) {
-            std::cout << "Failed to generate random bytes" << std::endl;
-        } else {
-            std::cout << "Generated random bytes" << std::endl;
-            std::string random_bytes_hex = utils::key_to_string(key, 32);
-            std::cout << "random_bytes_hex: " << random_bytes_hex << std::endl;
-        }
+        enclave::generate_new_keypair();
 
         // Initialize Crow HTTP server
         crow::SimpleApp app;

@@ -16,9 +16,18 @@ add_executable(MercuryLockbox src/main.cpp)
 # Include directories (e.g., header files in include/)
 # target_include_directories(MercuryLockbox PRIVATE include)
 
-add_library(LockboxLibrary src/library.cpp src/server.cpp src/utils.cpp src/key_manager.cpp src/enclave.cpp)
+# Add the cmake directory to the module path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# Include the secp256k1_zkp configuration
+include(secp256k1_zkp)
+
+get_target_property(SECP_INCLUDE_DIRS secp256k1_zkp INTERFACE_INCLUDE_DIRECTORIES)
+message(STATUS "secp256k1_zkp include directories: ${SECP_INCLUDE_DIRS}")
+
+add_library(LockboxLibrary src/library.cpp src/server.cpp src/utils.cpp src/key_manager.cpp src/enclave.cpp src/include_secp256k1_zkp_lib.cpp)
 target_include_directories(LockboxLibrary PUBLIC include)
-target_link_libraries(LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager)
+target_link_libraries(LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager secp256k1_zkp)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -42,6 +51,8 @@ find_package(google_cloud_cpp_storage REQUIRED)
 find_package(google_cloud_cpp_kms REQUIRED)
 find_package(google_cloud_cpp_secretmanager REQUIRED)
 
+
+
 target_include_directories(MercuryLockbox PRIVATE include)
 # Link the library to the main executable
-target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager)
+target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager secp256k1_zkp)
