@@ -1,6 +1,5 @@
 #include <crow.h>
 #include "library.h"
-#include "key_manager.h"
 #include "server.h"
 #include "CLI11.hpp"
 #include <toml++/toml.h>
@@ -124,12 +123,6 @@ int main(int argc, char *argv[]) {
     /* test_kms();
 
     test_secret(); */
-
-    std::vector<uint8_t> sealing_secret = key_manager::get_sealing_secret();
-
-    std::string sealing_secret_hex = utils::key_to_string(sealing_secret.data(), sealing_secret.size());
-
-    std::cout << "sealing_secret_hex: " << sealing_secret_hex << std::endl;
 
     CLI::App cli_app{"Lockbox Server"};
     cli_app.set_version_flag("--version", std::string("0.0.1"));

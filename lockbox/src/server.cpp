@@ -3,11 +3,18 @@
 #include <openssl/rand.h>
 #include "utils.h"
 #include "enclave.h"
+#include "key_manager.h"
 
 namespace lockbox {
     void start_server() {
 
-        enclave::generate_new_keypair();
+        std::vector<uint8_t> seed = key_manager::get_seed();
+
+        std::string seed_hex = utils::key_to_string(seed.data(), seed.size());
+
+        std::cout << "seed_hex: " << seed_hex << std::endl;
+
+        enclave::generate_new_keypair(seed.data());
 
         // Initialize Crow HTTP server
         crow::SimpleApp app;

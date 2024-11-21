@@ -45,7 +45,7 @@ namespace key_manager {
         return plaintext;
     }
 
-    std::vector<uint8_t> get_sealing_secret() {
+    std::vector<uint8_t> get_seed() {
         auto encrypted_secret = key_manager::get_encrypted_secret();
         std::string decrypted_secret;
         try {

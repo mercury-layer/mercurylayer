@@ -4,7 +4,11 @@ cmake_minimum_required(VERSION 3.15)
 # Define the project name and language
 project(MercuryLockbox VERSION 0.1
                     DESCRIPTION "Mercury Lockbox"
-                    LANGUAGES CXX)
+                    LANGUAGES C CXX)
+
+# Add C compiler settings
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Specify C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -22,12 +26,32 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Include the secp256k1_zkp configuration
 include(secp256k1_zkp)
 
-get_target_property(SECP_INCLUDE_DIRS secp256k1_zkp INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "secp256k1_zkp include directories: ${SECP_INCLUDE_DIRS}")
+add_library(LockboxLibrary 
+    src/library.cpp 
+    src/server.cpp 
+    src/utils.cpp 
+    src/key_manager.cpp 
+    src/enclave.cpp 
+    src/monocypher.c)
 
-add_library(LockboxLibrary src/library.cpp src/server.cpp src/utils.cpp src/key_manager.cpp src/enclave.cpp src/include_secp256k1_zkp_lib.cpp)
+set_source_files_properties(src/monocypher.c PROPERTIES LANGUAGE C)
+
 target_include_directories(LockboxLibrary PUBLIC include)
-target_link_libraries(LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager secp256k1_zkp)
+
+# Ensure proper C/C++ linkage
+target_compile_options(LockboxLibrary PRIVATE
+    $<$<COMPILE_LANGUAGE:C>:-std=c11>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>)
+    
+target_link_libraries(LockboxLibrary 
+    Crow::Crow 
+    cpr::cpr 
+    pqxx 
+    tomlplusplus::tomlplusplus 
+    google-cloud-cpp::storage 
+    google-cloud-cpp::kms 
+    google-cloud-cpp::secretmanager 
+    secp256k1_zkp)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -51,8 +75,15 @@ find_package(google_cloud_cpp_storage REQUIRED)
 find_package(google_cloud_cpp_kms REQUIRED)
 find_package(google_cloud_cpp_secretmanager REQUIRED)
 
-
-
 target_include_directories(MercuryLockbox PRIVATE include)
 # Link the library to the main executable
-target_link_libraries(MercuryLockbox PRIVATE LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager secp256k1_zkp)
+target_link_libraries(MercuryLockbox PRIVATE 
+    LockboxLibrary 
+    Crow::Crow 
+    cpr::cpr 
+    pqxx 
+    tomlplusplus::tomlplusplus 
+    google-cloud-cpp::storage 
+    google-cloud-cpp::kms 
+    google-cloud-cpp::secretmanager 
+    secp256k1_zkp)
