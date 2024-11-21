@@ -16,7 +16,7 @@ add_executable(MercuryLockbox src/main.cpp)
 # Include directories (e.g., header files in include/)
 # target_include_directories(MercuryLockbox PRIVATE include)
 
-add_library(LockboxLibrary src/library.cpp src/server.cpp src/utils.cpp src/key_manager.cpp)
+add_library(LockboxLibrary src/library.cpp src/server.cpp src/utils.cpp src/key_manager.cpp src/enclave.cpp)
 target_include_directories(LockboxLibrary PUBLIC include)
 target_link_libraries(LockboxLibrary Crow::Crow cpr::cpr pqxx tomlplusplus::tomlplusplus google-cloud-cpp::storage google-cloud-cpp::kms google-cloud-cpp::secretmanager)
 

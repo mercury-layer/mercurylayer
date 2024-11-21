@@ -5,9 +5,17 @@
       "version>=": "1.2.0"
     },
     {
-      "name": "google-cloud-cpp", 
-      "default-features": false, 
-      "features": ["storage", "kms", "secretmanager"]
+      "name": "google-cloud-cpp",
+      "default-features": false,
+      "features": [
+        "kms",
+        "secretmanager",
+        "storage"
+      ]
+    },
+    {
+      "name": "openssl",
+      "version>=": "3.4.0"
     }
   ]
 }
