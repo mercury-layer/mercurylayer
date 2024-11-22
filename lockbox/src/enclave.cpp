@@ -45,11 +45,13 @@ void encrypt_data(
 }
 namespace enclave {
 
-    void generate_new_keypair(
+    NewKeyPairResponse generate_new_keypair(
         unsigned char* seed
     ) {
 
         secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+
+        NewKeyPairResponse response;
 
         unsigned char server_privkey[32];
         memset(server_privkey, 0, 32);
@@ -69,31 +71,22 @@ namespace enclave {
         return_val = secp256k1_keypair_pub(ctx, &server_pubkey, &server_keypair);
         assert(return_val);
 
-        // remove
+        memset(response.server_pubkey, 0, 33);
 
-        std::string server_privkey_hex = utils::key_to_string(server_privkey, 32);
-        std::cout << "server_privkey_hex: " << server_privkey_hex << std::endl;
-
-        unsigned char local_compressed_server_pubkey[33];
-        memset(local_compressed_server_pubkey, 0, 33);
-
-        size_t len = sizeof(local_compressed_server_pubkey);
-        return_val = secp256k1_ec_pubkey_serialize(ctx, local_compressed_server_pubkey, &len, &server_pubkey, SECP256K1_EC_COMPRESSED);
+        size_t len = sizeof(response.server_pubkey);
+        return_val = secp256k1_ec_pubkey_serialize(ctx, response.server_pubkey, &len, &server_pubkey, SECP256K1_EC_COMPRESSED);
         assert(return_val);
-        // Should be the same size as the size of the output, because we passed a 33 byte array.
-        assert(len == sizeof(local_compressed_server_pubkey));
-
-        std::string server_pubkey_hex = utils::key_to_string(local_compressed_server_pubkey, 33);
-        std::cout << "server_pubkey_hex: " << server_pubkey_hex << std::endl;
-
+        // Must be the same size as the size of the output, because we passed a 33 byte array.
+        assert(len == sizeof(response.server_pubkey));
         // --- remove
 
-        utils::chacha20_poly1305_encrypted_data encrypted_data;
-        utils::initialize_encrypted_data(encrypted_data, sizeof(secp256k1_keypair));
+        utils::initialize_encrypted_data(response.encrypted_data, sizeof(secp256k1_keypair));
 
-        encrypt_data(&encrypted_data, seed, server_keypair.data, sizeof(secp256k1_keypair::data));
+        encrypt_data(&response.encrypted_data, seed, server_keypair.data, sizeof(secp256k1_keypair::data));
 
         secp256k1_context_destroy(ctx);
+
+        return response;
         
     }
 

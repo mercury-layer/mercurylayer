@@ -32,7 +32,8 @@ add_library(LockboxLibrary
     src/utils.cpp 
     src/key_manager.cpp 
     src/enclave.cpp 
-    src/monocypher.c)
+    src/monocypher.c
+    src/db_manager.cpp)
 
 set_source_files_properties(src/monocypher.c PROPERTIES LANGUAGE C)
 
