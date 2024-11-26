@@ -30,6 +30,44 @@ namespace lockbox {
         return crow::response{result};
     }
 
+    crow::response generate_public_nonce(const std::string& statechain_id,  unsigned char *seed) {
+
+        auto encrypted_keypair = std::make_unique<utils::chacha20_poly1305_encrypted_data>();
+
+        // the secret nonce is not defined yet
+        auto encrypted_secnonce = std::make_unique<utils::chacha20_poly1305_encrypted_data>();
+        encrypted_secnonce.reset();
+
+        std::string error_message;
+        bool data_loaded = db_manager::load_generated_key_data(
+            statechain_id,
+            encrypted_keypair,
+            encrypted_secnonce,
+            nullptr,
+            0,
+            error_message
+        );
+
+        assert(encrypted_secnonce == nullptr);
+
+        if (!data_loaded) {
+            error_message = "Failed to load aggregated key data: " + error_message;
+            return crow::response(500, error_message);
+        }
+
+        auto response = enclave::generate_nonce(seed, encrypted_keypair.get());
+
+        bool data_saved = db_manager::update_sealed_secnonce(
+            statechain_id,
+            response.server_pubnonce, sizeof(response.server_pubnonce),
+            *encrypted_secnonce,
+            error_message
+        );
+
+
+        
+    }
+
     void start_server() {
 
         std::vector<uint8_t> seed = key_manager::get_seed();
@@ -61,6 +99,22 @@ namespace lockbox {
             std::string statechain_id = req_body["statechain_id"].s();
 
             return generate_new_keypair(statechain_id, seed.data());
+        });
+
+        CROW_ROUTE(app, "/get_public_nonce")
+        .methods("POST"_method)([&seed](const crow::request& req) {
+
+            auto req_body = crow::json::load(req.body);
+            if (!req_body)
+                return crow::response(400);
+
+            if (req_body.count("statechain_id") == 0) {
+                return crow::response(400, "Invalid parameters. They must be 'statechain_id'.");
+            }
+
+            std::string statechain_id = req_body["statechain_id"].s();
+
+
         });
 
         // Start the server on port 18080

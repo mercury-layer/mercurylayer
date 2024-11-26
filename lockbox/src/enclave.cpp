@@ -43,6 +43,19 @@ void encrypt_data(
     ocall_print_string(encrypted_hex); */
 
 }
+
+int decrypt_data(
+    utils::chacha20_poly1305_encrypted_data *encrypted_data,
+    unsigned char* seed, 
+    uint8_t* decrypted_data, size_t decrypted_data_size)
+{
+    // Associated data (optional, can be NULL if not used)
+    uint8_t *ad = NULL;
+    size_t ad_size = 0;
+    
+    int status = crypto_aead_unlock(decrypted_data, encrypted_data->mac, seed, encrypted_data->nonce, ad, ad_size, encrypted_data->data, encrypted_data->data_len);
+    return status;
+}
 namespace enclave {
 
     NewKeyPairResponse generate_new_keypair(
@@ -88,6 +101,58 @@ namespace enclave {
 
         return response;
         
+    }
+
+    NewNonceResponse generate_nonce(unsigned char* seed, utils::chacha20_poly1305_encrypted_data *encrypted_keypair) {
+
+        NewNonceResponse response;
+
+        memset(response.server_pubnonce, 0, sizeof(response.server_pubnonce));
+        utils::initialize_encrypted_data(response.encrypted_secnonce, sizeof(secp256k1_musig_secnonce));
+
+        secp256k1_keypair server_keypair;
+        memset(server_keypair.data, 0, sizeof(server_keypair.data));
+
+        int status = decrypt_data(encrypted_keypair, seed, server_keypair.data, sizeof(server_keypair.data));
+        if (status != 0) {
+            throw std::runtime_error("\nSeed ecryption failed");
+        }
+
+        secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+
+        // step 1 - Extract server secret and public keys from keypair
+
+        unsigned char server_seckey[32];
+        int return_val = secp256k1_keypair_sec(ctx, server_seckey, &server_keypair);
+        assert(return_val);
+
+        secp256k1_pubkey server_pubkey;
+        return_val = secp256k1_keypair_pub(ctx, &server_pubkey, &server_keypair);
+        assert(return_val);
+
+        // step 2 - Generate secret and public nonce
+
+        unsigned char session_id[32];
+        memset(session_id, 0, 32);
+        if (RAND_bytes(session_id, sizeof(session_id)) != 1) {
+            throw std::runtime_error("Failed to generate random bytes");
+        }
+
+        secp256k1_musig_pubnonce server_pubnonce;
+        secp256k1_musig_secnonce server_secnonce;
+
+        return_val = secp256k1_musig_nonce_gen(ctx, &server_secnonce, &server_pubnonce, session_id, server_seckey, &server_pubkey, NULL, NULL, NULL);
+        assert(return_val);
+
+        // step 3 - Encrypt secret nonce
+        encrypt_data(&response.encrypted_secnonce, seed, server_secnonce.data, sizeof(secp256k1_musig_secnonce::data));
+
+        return_val = secp256k1_musig_pubnonce_serialize(ctx, response.server_pubnonce, &server_pubnonce);
+        assert(return_val);
+
+        secp256k1_context_destroy(ctx);
+
+        return response;
     }
 
 } // namespace enclave
