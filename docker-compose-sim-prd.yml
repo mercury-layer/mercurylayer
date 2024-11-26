@@ -30,11 +30,11 @@ services:
       context: token-server
       dockerfile: Dockerfile
     environment:
-      - processor_url = "http://0.0.0.0:18080"
-      - api_key = "aaaaa"
-      - fee = 10000
-      - unit = "BTC"
-      - delay = 3600
+      - PROCESSOR_URL = "http://0.0.0.0:18080"
+      - API_KEY = "aaaaa"
+      - FEE = 10000
+      - UNIT = "BTC"
+      - DELAY = 3600
       - DB_USER = "mercurylayer"
       - DB_PASSWORD = "<CHANGEME>"
       - DB_HOST = "<CHANGEME>"
