@@ -10,13 +10,12 @@ pub mod tb03_simple_atomic_transfer;
 pub mod tb04_simple_lightning_latch;
 pub mod tm01_sender_double_spends;
 mod tv05;
-pub mod temp01;
 use anyhow::{Result, Ok};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
 
-    /* tb01_simple_transfer::execute().await?;
+    tb01_simple_transfer::execute().await?;
     tb02_transfer_address_reuse::execute().await?;
     tb03_simple_atomic_transfer::execute().await?;
     tb04_simple_lightning_latch::execute().await?;
@@ -25,9 +24,9 @@ async fn main() -> Result<()> {
     ta02_duplicate_deposits::execute().await?;
     tv05::execute().await?;
 
-    ta03_multiple_deposits::execute().await?; */
+    ta03_multiple_deposits::execute().await?;
 
-    temp01::execute().await?;
+    // temp01::execute().await?;
     
     Ok(())
 }

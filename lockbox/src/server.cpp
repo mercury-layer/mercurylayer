@@ -140,9 +140,6 @@ namespace lockbox {
             auto encrypted_secnonce = std::make_unique<utils::chacha20_poly1305_encrypted_data>();
             encrypted_secnonce.reset();
 
-            unsigned char serialized_server_pubnonce[66];
-            memset(serialized_server_pubnonce, 0, sizeof(serialized_server_pubnonce));
-
             std::string error_message;
             bool data_loaded = db_manager::load_generated_key_data(
                 statechain_id,
@@ -167,6 +164,11 @@ namespace lockbox {
                 old_encrypted_keypair.get(),
                 serialized_x1.data(),
                 serialized_t2.data());
+
+            // print response.server_pubkey
+            auto partial_sig_hex = utils::key_to_string(response.server_pubkey, sizeof(response.server_pubkey));
+            std::cout << "server_pubkey: " << partial_sig_hex << std::endl;
+
 
             bool data_saved = db_manager::update_sealed_keypair(
                 response.encrypted_data, 
@@ -322,7 +324,23 @@ namespace lockbox {
                 return keyupdate(statechain_id, serialized_t2, serialized_x1, seed.data());
         });
 
-        // Start the server on port 18080
-        app.port(18080).multithreaded().run();
+        CROW_ROUTE(app,"/delete_statechain/<string>")
+            .methods("DELETE"_method)([](std::string statechain_id){
+                if (db_manager::delete_statechain(statechain_id)) {
+                    return crow::response(200, "Statechain deleted.");
+                } else {
+                    return crow::response(500, "Failed to connect to the database and delete statechain.");
+                }
+        });
+
+        uint16_t server_port = 0;
+
+        try {
+            server_port = utils::getEnclavePort();
+        } catch (const std::exception& e) {
+            throw std::runtime_error("Failed to get enclave port");
+        }
+        
+        app.port(server_port).multithreaded().run();
     }
 } // namespace lockbox

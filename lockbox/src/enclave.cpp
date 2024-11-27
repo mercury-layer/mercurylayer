@@ -183,6 +183,10 @@ namespace enclave {
             int return_val = secp256k1_keypair_sec(ctx, server_seckey, &server_keypair);
             assert(return_val);
 
+            // print server_seckey
+            auto key_hex = utils::key_to_string(server_seckey, 32);
+            std::cout << "sign priv_key: " << key_hex << std::endl;
+
             secp256k1_pubkey server_pubkey;
             return_val = secp256k1_keypair_pub(ctx, &server_pubkey, &server_keypair);
             assert(return_val);
@@ -248,6 +252,10 @@ namespace enclave {
             int return_val = secp256k1_keypair_sec(ctx, server_seckey, &server_keypair);
             assert(return_val);
 
+            // print server_seckey
+            auto key_hex = utils::key_to_string(server_seckey, 32);
+            std::cout << "original priv_key: " << key_hex << std::endl;
+
             unsigned char new_server_seckey[32];
             memcpy(new_server_seckey, server_seckey, 32);
 
@@ -265,6 +273,9 @@ namespace enclave {
 
             return_val = secp256k1_ec_seckey_tweak_add(ctx, new_server_seckey, x1);
             assert(return_val);
+
+            key_hex = utils::key_to_string(new_server_seckey, 32);
+            std::cout << "new priv_key: " << key_hex << std::endl;
 
             secp256k1_keypair new_server_keypair;
 
@@ -286,7 +297,7 @@ namespace enclave {
 
             memcpy(response.server_pubkey, local_compressed_server_pubkey, 33);
 
-            encrypt_data(&response.encrypted_data, seed, server_keypair.data, sizeof(secp256k1_keypair::data));
+            encrypt_data(&response.encrypted_data, seed, new_server_keypair.data, sizeof(secp256k1_keypair::data));
 
             secp256k1_context_destroy(ctx);
 
