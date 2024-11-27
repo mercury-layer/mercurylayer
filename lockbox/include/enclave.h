@@ -29,6 +29,12 @@ namespace enclave {
         unsigned char* session_data, 
         size_t session_data_size,
         unsigned char* serialized_server_pubnonce);
+    NewKeyPairResponse key_update(
+        unsigned char* seed, 
+        utils::chacha20_poly1305_encrypted_data *old_encrypted_keypair,
+        unsigned char* serialized_x1,
+        unsigned char* serialized_t2);
+    
 
 } // namespace enclave
 

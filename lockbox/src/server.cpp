@@ -128,6 +128,63 @@ namespace lockbox {
             return crow::response{result};
     }
 
+    crow::response keyupdate(
+        const std::string& statechain_id, 
+        std::vector<unsigned char>& serialized_t2,
+        std::vector<unsigned char>& serialized_x1,
+        unsigned char *seed) {
+
+            auto old_encrypted_keypair = std::make_unique<utils::chacha20_poly1305_encrypted_data>();
+        
+            // the secret nonce is not used here
+            auto encrypted_secnonce = std::make_unique<utils::chacha20_poly1305_encrypted_data>();
+            encrypted_secnonce.reset();
+
+            unsigned char serialized_server_pubnonce[66];
+            memset(serialized_server_pubnonce, 0, sizeof(serialized_server_pubnonce));
+
+            std::string error_message;
+            bool data_loaded = db_manager::load_generated_key_data(
+                statechain_id,
+                old_encrypted_keypair,
+                encrypted_secnonce,
+                nullptr,
+                0,
+                error_message
+            );
+
+            if (!data_loaded) {
+                error_message = "Failed to load aggregated key data: " + error_message;
+                return crow::response(500, error_message);
+            }
+
+            if (old_encrypted_keypair == nullptr) {
+                return crow::response(400, "Empty encrypted keypair!");
+            }
+
+            auto response = enclave::key_update(
+                seed, 
+                old_encrypted_keypair.get(),
+                serialized_x1.data(),
+                serialized_t2.data());
+
+            bool data_saved = db_manager::update_sealed_keypair(
+                response.encrypted_data, 
+                response.server_pubkey, sizeof(response.server_pubkey),
+                statechain_id, 
+                error_message);
+
+            if (!data_saved) {
+                error_message = "Failed to update aggregated key data: " + error_message;
+                return crow::response(500, error_message);
+            }
+
+            auto new_server_seckey_hex = utils::key_to_string(response.server_pubkey, sizeof(response.server_pubkey));
+
+            crow::json::wvalue result({{"server_pubkey", new_server_seckey_hex}});
+            return crow::response{result};
+    }
+
     void start_server() {
 
         std::vector<uint8_t> seed = key_manager::get_seed();
@@ -211,6 +268,7 @@ namespace lockbox {
 
         CROW_ROUTE(app,"/signature_count/<string>")
         ([](std::string statechain_id){
+
             int sig_count;
             std::string error_message;
             bool count_retrieved = db_manager::signature_count(statechain_id, sig_count);
@@ -222,6 +280,46 @@ namespace lockbox {
 
             crow::json::wvalue result({{"sig_count", sig_count}});
             return crow::response{result};
+        });
+
+        CROW_ROUTE(app, "/keyupdate")
+            .methods("POST"_method)([&seed](const crow::request& req) {
+                
+                auto req_body = crow::json::load(req.body);
+                if (!req_body)
+                    return crow::response(400);
+
+                if (req_body.count("statechain_id") == 0 || 
+                    req_body.count("t2") == 0 ||
+                    req_body.count("x1") == 0) {
+                    return crow::response(400, "Invalid parameters. They must be 'statechain_id', 't2' and 'x1'.");
+                }
+
+                std::string statechain_id = req_body["statechain_id"].s();
+                std::string t2_hex = req_body["t2"].s();
+                std::string x1_hex = req_body["x1"].s();
+
+                if (t2_hex.substr(0, 2) == "0x") {
+                    t2_hex = t2_hex.substr(2);
+                }
+
+                std::vector<unsigned char> serialized_t2 = utils::ParseHex(t2_hex);
+
+                if (serialized_t2.size() != 32) {
+                    return crow::response(400, "Invalid t2 length. Must be 32 bytes!");
+                }
+
+                if (x1_hex.substr(0, 2) == "0x") {
+                    x1_hex = x1_hex.substr(2);
+                }
+
+                std::vector<unsigned char> serialized_x1 = utils::ParseHex(x1_hex);
+
+                if (serialized_x1.size() != 32) {
+                    return crow::response(400, "Invalid x1 length. Must be 32 bytes!");
+                }
+
+                return keyupdate(statechain_id, serialized_t2, serialized_x1, seed.data());
         });
 
         // Start the server on port 18080

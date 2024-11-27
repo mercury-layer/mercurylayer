@@ -65,6 +65,8 @@ namespace enclave {
         secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
 
         NewKeyPairResponse response;
+        memset(response.server_pubkey, 0, 33);
+        utils::initialize_encrypted_data(response.encrypted_data, sizeof(secp256k1_keypair));
 
         unsigned char server_privkey[32];
         memset(server_privkey, 0, 32);
@@ -84,16 +86,12 @@ namespace enclave {
         return_val = secp256k1_keypair_pub(ctx, &server_pubkey, &server_keypair);
         assert(return_val);
 
-        memset(response.server_pubkey, 0, 33);
-
         size_t len = sizeof(response.server_pubkey);
         return_val = secp256k1_ec_pubkey_serialize(ctx, response.server_pubkey, &len, &server_pubkey, SECP256K1_EC_COMPRESSED);
         assert(return_val);
         // Must be the same size as the size of the output, because we passed a 33 byte array.
         assert(len == sizeof(response.server_pubkey));
         // --- remove
-
-        utils::initialize_encrypted_data(response.encrypted_data, sizeof(secp256k1_keypair));
 
         encrypt_data(&response.encrypted_data, seed, server_keypair.data, sizeof(secp256k1_keypair::data));
 
@@ -220,6 +218,80 @@ namespace enclave {
             secp256k1_context_destroy(ctx);
 
             return response;
+        }
+
+    NewKeyPairResponse key_update(
+        unsigned char* seed, 
+        utils::chacha20_poly1305_encrypted_data *old_encrypted_keypair,
+        unsigned char* serialized_x1,
+        unsigned char* serialized_t2) {
+
+            NewKeyPairResponse response;
+            memset(response.server_pubkey, 0, 33);
+            utils::initialize_encrypted_data(response.encrypted_data, sizeof(secp256k1_keypair));
+
+            // step 0 - Decrypt encrypted_keypair
+
+            secp256k1_keypair server_keypair;
+            memset(server_keypair.data, 0, sizeof(server_keypair.data));
+
+            int status = decrypt_data(old_encrypted_keypair, seed, server_keypair.data, sizeof(server_keypair.data));
+            if (status != 0) {
+                throw std::runtime_error("\nSeed ecryption failed");
+            }
+
+            secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+
+            // step 1 - Extract server secret from keypair
+
+            unsigned char server_seckey[32];
+            int return_val = secp256k1_keypair_sec(ctx, server_seckey, &server_keypair);
+            assert(return_val);
+
+            unsigned char new_server_seckey[32];
+            memcpy(new_server_seckey, server_seckey, 32);
+
+            return_val = secp256k1_ec_seckey_tweak_add(ctx, new_server_seckey, serialized_t2);
+            assert(return_val);
+
+            unsigned char x1[32];
+            memcpy(x1, serialized_x1, 32);
+
+            return_val = secp256k1_ec_seckey_verify(ctx, x1);
+            assert(return_val);
+
+            return_val = secp256k1_ec_seckey_negate(ctx, x1);
+            assert(return_val);
+
+            return_val = secp256k1_ec_seckey_tweak_add(ctx, new_server_seckey, x1);
+            assert(return_val);
+
+            secp256k1_keypair new_server_keypair;
+
+            return_val = secp256k1_keypair_create(ctx, &new_server_keypair, new_server_seckey);
+            assert(return_val);
+
+            secp256k1_pubkey new_server_pubkey;
+            return_val = secp256k1_keypair_pub(ctx, &new_server_pubkey, &new_server_keypair);
+            assert(return_val);
+
+            unsigned char local_compressed_server_pubkey[33];
+            memset(local_compressed_server_pubkey, 0, 33);
+
+            size_t len = sizeof(local_compressed_server_pubkey);
+            return_val = secp256k1_ec_pubkey_serialize(ctx, local_compressed_server_pubkey, &len, &new_server_pubkey, SECP256K1_EC_COMPRESSED);
+            assert(return_val);
+            // Should be the same size as the size of the output, because we passed a 33 byte array.
+            assert(len == sizeof(local_compressed_server_pubkey));
+
+            memcpy(response.server_pubkey, local_compressed_server_pubkey, 33);
+
+            encrypt_data(&response.encrypted_data, seed, server_keypair.data, sizeof(secp256k1_keypair::data));
+
+            secp256k1_context_destroy(ctx);
+
+            return response;
+
         }
 
 } // namespace enclave
