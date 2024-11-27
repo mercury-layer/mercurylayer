@@ -60,12 +60,19 @@ namespace lockbox {
         bool data_saved = db_manager::update_sealed_secnonce(
             statechain_id,
             response.server_pubnonce, sizeof(response.server_pubnonce),
-            *encrypted_secnonce,
+            response.encrypted_secnonce,
             error_message
         );
 
+        if (!data_saved) {
+            error_message = "Failed to save sealed secret nonce: " + error_message;
+            return crow::response(500, error_message);
+        }
 
-        
+        auto serialized_server_pubnonce_hex = utils::key_to_string(response.server_pubnonce, sizeof(response.server_pubnonce));
+
+        crow::json::wvalue result({{"server_pubnonce", serialized_server_pubnonce_hex}});
+        return crow::response{result};
     }
 
     void start_server() {
@@ -114,7 +121,7 @@ namespace lockbox {
 
             std::string statechain_id = req_body["statechain_id"].s();
 
-
+            return generate_public_nonce(statechain_id, seed.data());
         });
 
         // Start the server on port 18080
