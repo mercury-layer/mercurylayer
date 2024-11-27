@@ -30,8 +30,8 @@ services:
       context: token-server
       dockerfile: Dockerfile
     environment:
-      - PROCESSOR_URL = "http://0.0.0.0:18080"
-      - API_KEY = "aaaaa"
+      - PROCESSOR_URL = ""
+      - API_KEY = ""
       - FEE = 10000
       - UNIT = "BTC"
       - DELAY = 3600
@@ -40,6 +40,9 @@ services:
       - DB_HOST = "<CHANGEME>"
       - DB_PORT = 5432
       - DB_NAME = "mercury"
+      - BITCOIND = "http://user:password@127.0.0.1:8332/"
+      - LIGHTNINGD = ""
+      - LNMACAROON = ""
     ports:
       - "18080:18080"
   explorer:
