@@ -33,6 +33,8 @@ namespace db_manager {
         std::string& error_message);
 
     bool update_sig_count(const std::string& statechain_id);
+
+    bool signature_count(const std::string& statechain_id, int& sig_count);
 }
 
 #endif // DB_MANAGER_H

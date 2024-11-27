@@ -296,4 +296,42 @@ namespace db_manager {
             return false;
         }
     }
+
+    bool signature_count(const std::string& statechain_id, int& sig_count) {
+
+        auto database_connection_string = getDatabaseConnectionString();
+
+        try
+        {
+            pqxx::connection conn(database_connection_string);
+            if (conn.is_open()) {
+
+                std::string sig_count_query =
+                    "SELECT sig_count FROM generated_public_key WHERE statechain_id = $1;";
+            
+                pqxx::nontransaction ntxn(conn);
+
+                conn.prepare("sig_count_query", sig_count_query);
+
+                pqxx::result result = ntxn.exec_prepared("sig_count_query", statechain_id);
+
+                if (!result.empty()) {
+                    auto sig_count_field = result[0]["sig_count"];
+                    if (!sig_count_field.is_null()) {
+                        sig_count = sig_count_field.as<int>();
+                        return true;
+                    }
+                }
+                
+                conn.close();
+                return true;
+            } else {
+                return false;
+            }
+        }
+        catch (std::exception const &e)
+        {
+            return false;
+        }
+    }
 } // namespace db_manager

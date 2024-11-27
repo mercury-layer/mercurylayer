@@ -209,6 +209,21 @@ namespace lockbox {
         
         });
 
+        CROW_ROUTE(app,"/signature_count/<string>")
+        ([](std::string statechain_id){
+            int sig_count;
+            std::string error_message;
+            bool count_retrieved = db_manager::signature_count(statechain_id, sig_count);
+
+            if (!count_retrieved) {
+                error_message = "Failed to retrieve signature count: " + error_message;
+                return crow::response(500, error_message);
+            }
+
+            crow::json::wvalue result({{"sig_count", sig_count}});
+            return crow::response{result};
+        });
+
         // Start the server on port 18080
         app.port(18080).multithreaded().run();
     }
