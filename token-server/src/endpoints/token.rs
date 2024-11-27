@@ -7,6 +7,46 @@ use sqlx::Row;
 
 use crate::server::TokenServer;
 
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
+pub struct InvoiceNode{
+    pub payment_hash: String,
+    pub expires_at: u64,
+    pub bolt11: String
+}
+
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
+pub struct ReqInvoiceNode{
+    pub amount: u64,
+    pub label: String,
+    pub description: String
+}
+
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
+pub struct RTLInvoiceNode{
+    pub payment_hash: String,
+    pub expires_at: u64,
+    pub bolt11: String,
+    pub payment_secret: String,
+    pub warning_capacity: String
+}
+
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
+pub struct RTLDataNode{
+    pub label: String,
+    pub bolt11: String,
+    pub payment_hash: String,
+    pub msatoshi: u64,
+    pub amount_msat: String,
+    pub status: String,
+    pub description: String,
+    pub expires_at: u64
+}
+
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
+pub struct RTLQueryNode{
+    pub invoices: Vec<RTLData>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Invoice{
     pub id: String,
@@ -136,7 +176,14 @@ pub async fn token_gen(token_server: &State<TokenServer>) -> status::Custom<Json
 
     let token_id = uuid::Uuid::new_v4().to_string();   
 
-    let invoice: Invoice = get_lightning_invoice(token_server, token_id.clone()).await;
+    let config = crate::server_config::ServerConfig::load();
+
+    if config.lightningd == "" && config.processor_url != "" && config.bitcoind == "" {
+        let invoice: Invoice = get_lightning_invoice(token_server, token_id.clone()).await;
+    } else if config.processor_url == "" && config.lightningd != "" {
+        let invoice_node: InvoiceNode = get_lightning_invoice_node(token_server, token_id.clone()).await;
+    }
+
 
     let pod_info = PODInfo {
         token_id: token_id.clone(),
@@ -148,7 +195,6 @@ pub async fn token_gen(token_server: &State<TokenServer>) -> status::Custom<Json
 
     insert_new_token(&token_server.pool, &token_id, &invoice.pr.clone(), &invoice.onChainAddr, &invoice.id).await;
 
-    let config = crate::server_config::ServerConfig::load();
 
     let response_body = json!({
         "pod_info": pod_info,
@@ -266,7 +312,60 @@ pub async fn get_lightning_invoice(token_server: &State<TokenServer>, token_id: 
     return invoice;
 }
 
-pub async fn query_lightning_payment(token_server: &State<TokenServer>, processor_id: &String) -> u64 {
+pub async fn get_lightning_invoice_node(token_server: &State<TokenServer>, token_id: String) -> Invoice {
+
+    let config = crate::server_config::ServerConfig::load();
+
+    let id_str = &token_id.to_string();
+
+    let cln_url: Url = config.lightningd.clone();
+    let macaroon = config.lightningd.macaroon;
+    let path: &str = "v1/invoice/genInvoice";
+    let inv_request = ReqInvoiceNode {
+        amount: *value,
+        label: token_id.to_string(),
+        description: "POD".to_string(),
+    };
+
+    let client: reqwest::Client = reqwest::Client::new();
+    let request = client.post(&format!("{}/{}", cln_url, path));
+    
+    let value = request.header("macaroon", macaroon).header("encodingtype","hex").json(&inv_request).send().await.unwrap().text().await.unwrap(); 
+
+    let ret_invoice: RTLInvoiceNode = serde_json::from_str(value.as_str()).expect(&format!("failed to parse: {}", value.as_str()));
+
+    let invoice = Invoice {
+        id: "null".to_string(),
+        pr: ret_invoice.bolt11,
+        checkoutUrl: "null".to_string(),
+        onChainAddr: "".to_string(),
+    };
+    return invoice;
+}
+
+
+
+pub async fn query_lightning_payment(token_server: &State<TokenServer>, token_id: &String) -> u64 {
+
+    let processor_url = token_server.config.processor_url.clone();
+    let api_key = token_server.config.api_key.clone();
+    let path: String = "checkout/".to_string() + processor_id;
+
+    let client: reqwest::Client = reqwest::Client::new();
+    let request = client.get(&format!("{}/{}", processor_url, path));
+
+    let value = request.header("Api-Key", api_key).header("encodingtype","hex").send().await.unwrap().text().await.unwrap();
+
+    let ret_invoice: RTLQuery = serde_json::from_str(value.as_str()).expect(&format!("failed to parse: {}", value.as_str()));
+
+    if ret_invoice.isPaid {
+        return 0;
+    } else {
+        return ret_invoice.createdAt + ret_invoice.delay;
+    }
+}
+
+pub async fn query_lightning_payment_node(token_server: &State<TokenServer>, processor_id: &String) -> u64 {
 
     let processor_url = token_server.config.processor_url.clone();
     let api_key = token_server.config.api_key.clone();

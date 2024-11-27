@@ -28,6 +28,12 @@ pub struct ServerConfig {
     pub db_port: u16,
     /// Database name
     pub db_name: String,
+    /// bitcoind node URL
+    pub bitcoind: String,
+    /// lighting node URL
+    pub lightningd: String,
+    /// ln_macaroon
+    pub lnmacaroon: String,
 }
 
 impl Default for ServerConfig {
@@ -44,6 +50,9 @@ impl Default for ServerConfig {
             db_host: String::from("db_server"),
             db_port: 5432,
             db_name: String::from("mercury"),
+            bitcoind: String::from(""),
+            lightningd: String::from(""),
+            lnmacaroon: String::from(""),
         }
     }
 }
@@ -62,6 +71,9 @@ impl From<ConfigRs> for ServerConfig {
             db_host: config.get::<String>("db_host").unwrap_or_else(|_| String::new()),
             db_port: config.get::<u16>("db_port").unwrap_or(0),
             db_name: config.get::<String>("db_name").unwrap_or_else(|_| String::new()),
+            bitcoind: config.get::<String>("bitcoind").unwrap_or_else(|_| String::new()),
+            lightningd: config.get::<String>("lightningd").unwrap_or_else(|_| String::new()),
+            lnmacaroon: config.get::<String>("lnmacaroon").unwrap_or_else(|_| String::new()),
         }
     }
 }
@@ -99,6 +111,9 @@ impl ServerConfig {
             db_host: get_env_or_config("db_host", "DB_HOST"),
             db_port: get_env_or_config("db_port", "DB_PORT").parse::<u16>().unwrap(),
             db_name: get_env_or_config("db_name", "DB_NAME"),
+            bitcoind: get_env_or_config("bitcoind", "BITCOIND"),
+            lightningd: get_env_or_config("lightningd", "LIGHTNINGD"),
+            lnmacaroon: get_env_or_config("lnmacaroon", "LNMACAROON"),
         }
     }
 
