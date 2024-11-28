@@ -165,11 +165,6 @@ namespace lockbox {
                 serialized_x1.data(),
                 serialized_t2.data());
 
-            // print response.server_pubkey
-            auto partial_sig_hex = utils::key_to_string(response.server_pubkey, sizeof(response.server_pubkey));
-            std::cout << "server_pubkey: " << partial_sig_hex << std::endl;
-
-
             bool data_saved = db_manager::update_sealed_keypair(
                 response.encrypted_data, 
                 response.server_pubkey, sizeof(response.server_pubkey),
@@ -192,10 +187,6 @@ namespace lockbox {
         std::vector<uint8_t> seed = key_manager::get_seed();
 
         std::string seed_hex = utils::key_to_string(seed.data(), seed.size());
-
-        std::cout << "seed_hex: " << seed_hex << std::endl;
-
-        // generate_new_keypair(seed.data());
 
         // Initialize Crow HTTP server
         crow::SimpleApp app;

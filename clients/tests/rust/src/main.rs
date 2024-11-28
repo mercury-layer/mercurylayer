@@ -25,8 +25,6 @@ async fn main() -> Result<()> {
     tv05::execute().await?;
 
     ta03_multiple_deposits::execute().await?;
-
-    // temp01::execute().await?;
     
     Ok(())
 }

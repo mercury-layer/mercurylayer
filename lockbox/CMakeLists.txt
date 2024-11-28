@@ -27,7 +27,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(secp256k1_zkp)
 
 add_library(LockboxLibrary 
-    src/library.cpp 
     src/server.cpp 
     src/utils.cpp 
     src/key_manager.cpp 
