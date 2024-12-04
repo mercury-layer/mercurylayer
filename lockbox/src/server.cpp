@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "enclave.h"
 #include "key_manager.h"
+#include "hashicorp_key_manager.h"
 #include "db_manager.h"
 
 namespace lockbox {
@@ -182,11 +183,21 @@ namespace lockbox {
             return crow::response{result};
     }
 
-    void start_server() {
+    void start_server(const std::string& key_provider) {
 
-        std::vector<uint8_t> seed = key_manager::get_seed();
+        std::vector<uint8_t> seed;
 
-        std::string seed_hex = utils::key_to_string(seed.data(), seed.size());
+        if (key_provider == "google_kms") {
+            seed = key_manager::get_seed();
+        } else if (key_provider == "hashicorp") {
+            seed = hashicorp_key_manager::get_seed();
+        } else {
+            throw std::runtime_error("Invalid key provider: " + key_provider);
+        }
+
+        /* std::string seed_hex = utils::key_to_string(seed.data(), seed.size());
+
+        std::cout << "Seed:       " << seed_hex << std::endl; */
 
         // Initialize Crow HTTP server
         crow::SimpleApp app;

@@ -30,6 +30,7 @@ add_library(LockboxLibrary
     src/server.cpp 
     src/utils.cpp 
     src/key_manager.cpp 
+    src/hashicorp_key_manager.cpp
     src/enclave.cpp 
     src/monocypher.c
     src/db_manager.cpp)

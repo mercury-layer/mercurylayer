@@ -12,4 +12,4 @@ $ cmake --preset=vcpkg ..
 $ cmake --build .
 ```
 
-4. Then, to run the server: `./MercuryLockbox`
+4. Then, to run the server: `./MercuryLockbox --key_provider=google_kms` or `./MercuryLockbox --key_provider=hashicorp`.
