@@ -25,23 +25,6 @@ void encrypt_data(
 
     encrypted_data->data_len = raw_data_size;
     crypto_aead_lock(encrypted_data->data, encrypted_data->mac, seed, encrypted_data->nonce, ad, ad_size, raw_data, raw_data_size);
-
-    /* char* seed_hex = data_to_hex(seed, sizeof(seed));
-    ocall_print_string("seed:");
-    ocall_print_string(seed_hex);
-
-    char* mac_hex = data_to_hex(encrypted_data->mac, sizeof(encrypted_data->mac));
-    ocall_print_string("mac:");
-    ocall_print_string(mac_hex);
-
-    char* nonce_hex = data_to_hex(encrypted_data->nonce, sizeof(encrypted_data->nonce));
-    ocall_print_string("nonce:");
-    ocall_print_string(nonce_hex);
-
-    char* encrypted_hex = data_to_hex(encrypted_data->data, encrypted_data->data_len);
-    ocall_print_string("encrypted:");
-    ocall_print_string(encrypted_hex); */
-
 }
 
 int decrypt_data(

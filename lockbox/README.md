@@ -11,5 +11,6 @@ $ mkdir -p build && cd build
 $ cmake --preset=vcpkg ..
 $ cmake --build .
 ```
+4. Set the desired key manager in `Settings.toml`. Currently, there are 3 available: `google_kms`, `hashicorp`, `filesystem`.
 
-4. Then, to run the server: `./MercuryLockbox --key_provider=google_kms` or `./MercuryLockbox --key_provider=hashicorp`.
+5. Then, to run the server: `./MercuryLockbox`.

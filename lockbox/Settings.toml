@@ -1,8 +1,9 @@
 [general]
 database_connection_string = "postgresql://postgres:postgres@localhost/enclave"
 server_port = 18080
-replication_server_url = "http://localhost:18082"
-seed_dir = "./seed"
+key_manager = "filesystem" # "google_kms", "hashicorp", "filesystem"
+[filesystem]
+seed_filepath = "./seed"
 [gcloud]
 project_id = "mercury-441416"
 project_number = "100600525477"
