@@ -3,8 +3,9 @@
 #include <openssl/rand.h>
 #include "utils.h"
 #include "enclave.h"
-#include "key_manager.h"
+#include "google_key_manager.h"
 #include "hashicorp_key_manager.h"
+#include "filesystem_key_manager.h"
 #include "db_manager.h"
 
 namespace lockbox {
@@ -187,7 +188,9 @@ namespace lockbox {
 
         std::vector<uint8_t> seed;
 
-        if (key_provider == "google_kms") {
+        if (key_provider == "filesystem") {
+            seed = filesystem_key_manager::get_seed();
+        } else if (key_provider == "google_kms") {
             seed = key_manager::get_seed();
         } else if (key_provider == "hashicorp") {
             seed = hashicorp_key_manager::get_seed();

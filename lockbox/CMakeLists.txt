@@ -29,8 +29,9 @@ include(secp256k1_zkp)
 add_library(LockboxLibrary 
     src/server.cpp 
     src/utils.cpp 
-    src/key_manager.cpp 
+    src/google_key_manager.cpp 
     src/hashicorp_key_manager.cpp
+    src/filesystem_key_manager.cpp
     src/enclave.cpp 
     src/monocypher.c
     src/db_manager.cpp)
@@ -52,7 +53,9 @@ target_link_libraries(LockboxLibrary
     google-cloud-cpp::storage 
     google-cloud-cpp::kms 
     google-cloud-cpp::secretmanager 
-    secp256k1_zkp)
+    secp256k1_zkp
+    OpenSSL::SSL 
+    OpenSSL::Crypto)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -75,6 +78,7 @@ find_package(cpr REQUIRED)
 find_package(google_cloud_cpp_storage REQUIRED)
 find_package(google_cloud_cpp_kms REQUIRED)
 find_package(google_cloud_cpp_secretmanager REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 target_include_directories(MercuryLockbox PRIVATE include)
 # Link the library to the main executable
@@ -87,7 +91,9 @@ target_link_libraries(MercuryLockbox PRIVATE
     google-cloud-cpp::storage 
     google-cloud-cpp::kms 
     google-cloud-cpp::secretmanager 
-    secp256k1_zkp)
+    secp256k1_zkp
+    OpenSSL::SSL 
+    OpenSSL::Crypto)
 
 # Copy Settings.toml after building MercuryLockbox
 add_custom_command(TARGET MercuryLockbox POST_BUILD
