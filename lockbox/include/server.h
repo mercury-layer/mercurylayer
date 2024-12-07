@@ -4,7 +4,7 @@
 #include <string>
 
 namespace lockbox {
-    void start_server(const std::string& key_provider);
+    void start_server();
 } // namespace lockbox
 
 #endif // SERVER_H

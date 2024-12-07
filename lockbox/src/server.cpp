@@ -7,6 +7,7 @@
 #include "hashicorp_key_manager.h"
 #include "filesystem_key_manager.h"
 #include "db_manager.h"
+#include <toml++/toml.h>
 
 namespace lockbox {
 
@@ -184,9 +185,22 @@ namespace lockbox {
             return crow::response{result};
     }
 
-    void start_server(const std::string& key_provider) {
+    std::string getKeyManager() {
+        const char* value = std::getenv("KEY_MANAGER");
+
+        if (value == nullptr) {
+            auto config = toml::parse_file("Settings.toml");
+            return config["general"]["key_manager"].as_string()->get();
+        } else {
+            return std::string(value);
+        }
+    }
+
+    void start_server() {
 
         std::vector<uint8_t> seed;
+
+        auto key_provider = getKeyManager();
 
         if (key_provider == "filesystem") {
             seed = filesystem_key_manager::get_seed();
@@ -195,7 +209,7 @@ namespace lockbox {
         } else if (key_provider == "hashicorp") {
             seed = hashicorp_key_manager::get_seed();
         } else {
-            throw std::runtime_error("Invalid key provider: " + key_provider);
+            throw std::runtime_error("Invalid key manager: " + key_provider);
         }
 
         /* std::string seed_hex = utils::key_to_string(seed.data(), seed.size());
