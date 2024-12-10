@@ -8,6 +8,11 @@ db_host = "localhost"
 db_port = 5432
 db_name = "mercury"
 
+[nostr_info]
+relay_server = "wss://relay.damus.io/"
+relay_interval = 10
+nostr_privkey = "nsec17e0nvplcze4k7q9nazrw0k3aracwhg6vmuareewjp83ta89njw5spjcgzs"
+
 [[enclaves]]
 url = "http://0.0.0.0:18080"
 allow_deposit = true
@@ -29,3 +34,4 @@ url = "http://0.0.0.0:18080"
 allow_deposit = true
 
 # env var: ENCLAVES='[{"url": "http://0.0.0.0:18080", "allow_deposit": true}, {"url": "http://0.0.0.0:18080", "allow_deposit": false}]'
+# env var: NOSTR_INFO='{"relay_server": "wss://relay.damus.io/", "relay_interval": 10, "nostr_privkey": "nsec17e0nvplcze4k7q9nazrw0k3aracwhg6vmuareewjp83ta89njw5spjcgzs"}'

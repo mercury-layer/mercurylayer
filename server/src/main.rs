@@ -5,8 +5,10 @@ mod database;
 
 #[macro_use] extern crate rocket;
 
+use std::time::Duration;
+
 use endpoints::utils;
-use rocket::{serde::json::{Value, json}, Request, Response};
+use rocket::{serde::json::{json, Value}, tokio::{self, time::interval}, Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use server::StateChainEntity;
@@ -34,12 +36,24 @@ fn not_found(req: &Request) -> Value {
     json!(message)
 }
 
+fn print_periodic_message(nostr_info: &server_config::NostrInfo) {
+    println!("Periodic task: Hello, world!");
+
+    let relay_interval = nostr_info.relay_interval;
+    let relay_server = &nostr_info.relay_server;
+    let nostr_privkey = &nostr_info.nostr_privkey;
+
+    println!("Relay interval: {}", relay_interval);
+    println!("Relay server: {}", relay_server);
+    println!("Nostr privkey: {}", nostr_privkey);
+}
+
 #[rocket::main]
 async fn main() {
 
     env_logger::init();
 
-    server_config::ServerConfig::load();
+    let config = server_config::ServerConfig::load();
 
     let statechain_entity = StateChainEntity::new().await;
 
@@ -47,6 +61,34 @@ async fn main() {
         .run(&statechain_entity.pool)
         .await
         .unwrap();
+
+        let interval_seconds = 5;
+
+    
+    if config.nostr_info.is_some() {
+        let nostr_info = config.nostr_info.unwrap();
+        // let relay_interval = nostr_info.relay_interval;
+        // let relay_server = nostr_info.relay_server;
+        // let nostr_privkey = nostr_info.nostr_privkey;
+        // tokio::spawn(async move {
+        //     let mut ticker = interval(Duration::from_secs(relay_interval as u64));
+        //     loop {
+        //         ticker.tick().await;
+        //         let _ = utils::relay_to_nostr(relay_server.clone(), nostr_privkey.clone()).await;
+        //     }
+        // });
+
+        tokio::spawn(async move {
+            let mut ticker = interval(Duration::from_secs(interval_seconds));
+            loop {
+                ticker.tick().await;
+                print_periodic_message(&nostr_info);
+            }
+        });
+    } else {
+        println!("No Nostr info found in config file");
+    }
+    
 
     let _ = rocket::build()
         .mount("/", routes![

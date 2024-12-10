@@ -9,6 +9,16 @@ pub struct Enclave {
     pub allow_deposit: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NostrInfo {
+    /// Nostr Relay server
+    pub relay_server: String,
+    /// Relay interval
+    pub relay_interval: u32,
+    /// Nostr private key
+    pub nostr_privkey: String,
+}
+
 /// Config struct storing all StataChain Entity config
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerConfig {
@@ -32,6 +42,9 @@ pub struct ServerConfig {
     pub db_port: u16,
     /// Database name
     pub db_name: String,
+    /// Nostr info
+    pub nostr_info: Option<NostrInfo>,
+    
 }
 
 impl Default for ServerConfig {
@@ -56,11 +69,12 @@ impl Default for ServerConfig {
             db_host: String::from("db_server"),
             db_port: 5432,
             db_name: String::from("mercury"),
+            nostr_info: None,
         }
     }
 }
 
-impl From<ConfigRs> for ServerConfig {
+/* impl From<ConfigRs> for ServerConfig {
     fn from(config: ConfigRs) -> Self {
         ServerConfig {
             network: config.get::<String>("network").unwrap_or_else(|_| String::new()),
@@ -75,7 +89,7 @@ impl From<ConfigRs> for ServerConfig {
             db_name: config.get::<String>("db_name").unwrap_or_else(|_| String::new()),
         }
     }
-}
+} */
 
 impl ServerConfig {
     pub fn load() -> Self {
@@ -111,6 +125,26 @@ impl ServerConfig {
             settings.get::<Vec<Enclave>>(key).unwrap()
         };
 
+        let get_env_or_config_nostr_info = |key: &str, env_var: &str| -> Option<NostrInfo> {
+
+            let env_nostr_info = env::var(env_var);
+
+            
+            if env_nostr_info.is_ok() {
+
+                let res = serde_json::from_str::<NostrInfo>(&env_nostr_info.unwrap()).unwrap();
+                return Some(res)
+            }
+
+            let res = settings.get::<NostrInfo>(key);
+
+            if res.is_ok() {
+                return Some(res.unwrap())
+            } else {
+                return None
+            }
+        };
+
         ServerConfig {
             network: get_env_or_config("network", "BITCOIN_NETWORK"),
             lockheight_init: get_env_or_config("lockheight_init", "LOCKHEIGHT_INIT").parse::<u32>().unwrap(),
@@ -122,6 +156,7 @@ impl ServerConfig {
             db_host: get_env_or_config("db_host", "DB_HOST"),
             db_port: get_env_or_config("db_port", "DB_PORT").parse::<u16>().unwrap(),
             db_name: get_env_or_config("db_name", "DB_NAME"),
+            nostr_info: get_env_or_config_nostr_info("nostr_info", "NOSTR_INFO"),
         }
     }
 
