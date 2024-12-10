@@ -5,11 +5,11 @@ mod database;
 
 #[macro_use] extern crate rocket;
 
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use endpoints::utils;
 use rocket::{serde::json::{json, Value}, tokio::{self, time::interval}, Request, Response};
-use rocket::fairing::{Fairing, Info, Kind};
+use rocket::fairing::{Fairing, Info};
 use rocket::http::Header;
 use server::StateChainEntity;
 
@@ -36,7 +36,7 @@ fn not_found(req: &Request) -> Value {
     json!(message)
 }
 
-fn print_periodic_message(nostr_info: &server_config::NostrInfo) {
+async fn broadcast_nip_100(nostr_info: &server_config::NostrInfo) -> Result<(), Box<dyn std::error::Error>> {
     println!("Periodic task: Hello, world!");
 
     let relay_interval = nostr_info.relay_interval;
@@ -46,6 +46,43 @@ fn print_periodic_message(nostr_info: &server_config::NostrInfo) {
     println!("Relay interval: {}", relay_interval);
     println!("Relay server: {}", relay_server);
     println!("Nostr privkey: {}", nostr_privkey);
+
+    let sec_key = nostr_sdk::Keys::parse(nostr_privkey)?;
+
+    let content = "Mercury server descritpion";
+    let tags = vec![
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("url".into()), ["http://mercury_server.xyz"]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("published_at".into()), ["1296962229"]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("timelock".into()), ["10000"]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("location".into()), ["UK"]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("fee".into()), ["0.0001", "BTC", "true", "false"]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("status".into()), ["active"]),
+    ];
+
+    let client = nostr_sdk::Client::new(sec_key.clone());
+
+    client.add_relay(relay_server).await?;
+
+    client.connect().await;
+
+    let created_at = nostr_sdk::Timestamp::now();
+
+    let event = nostr_sdk::EventBuilder::new(
+        nostr_sdk::Kind::Custom(39101),  // Custom event kind
+        content.to_string(),  // Content
+    )
+        .tags(tags)
+        .custom_created_at(created_at)
+        .sign_with_keys(&sec_key)?;
+
+        /* println!("Event as JSON:");
+        println!("{}", serde_json::to_string_pretty(&event)?); */
+
+
+    client.send_event(event).await?;
+
+    Ok(())
+
 }
 
 #[rocket::main]
@@ -62,27 +99,16 @@ async fn main() {
         .await
         .unwrap();
 
-        let interval_seconds = 5;
-
-    
     if config.nostr_info.is_some() {
         let nostr_info = config.nostr_info.unwrap();
-        // let relay_interval = nostr_info.relay_interval;
-        // let relay_server = nostr_info.relay_server;
-        // let nostr_privkey = nostr_info.nostr_privkey;
-        // tokio::spawn(async move {
-        //     let mut ticker = interval(Duration::from_secs(relay_interval as u64));
-        //     loop {
-        //         ticker.tick().await;
-        //         let _ = utils::relay_to_nostr(relay_server.clone(), nostr_privkey.clone()).await;
-        //     }
-        // });
+
+        let interval_seconds = nostr_info.relay_interval as u64;
 
         tokio::spawn(async move {
             let mut ticker = interval(Duration::from_secs(interval_seconds));
             loop {
                 ticker.tick().await;
-                print_periodic_message(&nostr_info);
+                broadcast_nip_100(&nostr_info).await.unwrap();
             }
         });
     } else {
@@ -137,7 +163,7 @@ impl Fairing for Cors {
     fn info(&self) -> Info {
         Info {
             name: "Cross-Origin-Resource-Sharing Fairing",
-            kind: Kind::Response,
+            kind: rocket::fairing::Kind::Response,
         }
     }
 

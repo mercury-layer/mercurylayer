@@ -10,7 +10,7 @@ db_name = "mercury"
 
 [nostr_info]
 relay_server = "wss://relay.damus.io/"
-relay_interval = 10
+relay_interval = 15
 nostr_privkey = "nsec17e0nvplcze4k7q9nazrw0k3aracwhg6vmuareewjp83ta89njw5spjcgzs"
 
 [[enclaves]]
