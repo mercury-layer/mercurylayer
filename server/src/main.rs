@@ -36,28 +36,37 @@ fn not_found(req: &Request) -> Value {
     json!(message)
 }
 
-async fn broadcast_nip_100(nostr_info: &server_config::NostrInfo) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Periodic task: Hello, world!");
+async fn broadcast_nip_100(nostr_info: &server_config::NostrInfo, published_at: u64, timelock: u32) -> Result<(), Box<dyn std::error::Error>> {
 
-    let relay_interval = nostr_info.relay_interval;
     let relay_server = &nostr_info.relay_server;
     let nostr_privkey = &nostr_info.nostr_privkey;
-
-    println!("Relay interval: {}", relay_interval);
-    println!("Relay server: {}", relay_server);
-    println!("Nostr privkey: {}", nostr_privkey);
+    let server_url = &nostr_info.server_url;
+    let location = &nostr_info.location;
+    let status = &nostr_info.active;
+    let onchain_payments = &nostr_info.onchain_payments.to_string();
+    let ln_payments = &nostr_info.ln_payments.to_string();
+    let fee = &nostr_info.fee.to_string();
+    let unit = &nostr_info.unit;
 
     let sec_key = nostr_sdk::Keys::parse(nostr_privkey)?;
 
     let content = "Mercury server descritpion";
-    let tags = vec![
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("url".into()), ["http://mercury_server.xyz"]),
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("published_at".into()), ["1296962229"]),
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("timelock".into()), ["10000"]),
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("location".into()), ["UK"]),
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("fee".into()), ["0.0001", "BTC", "true", "false"]),
-        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("status".into()), ["active"]),
+    let mut tags = vec![
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("url".into()), [server_url]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("published_at".into()), [published_at.to_string()]),
+        nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("timelock".into()), [timelock.to_string()]),
     ];
+
+    if location.is_some() {
+        tags.push(nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("location".into()), [location.as_ref().unwrap()]));
+    }
+
+    tags.push(nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("fee".into()), [fee, unit, ln_payments, onchain_payments]));
+
+    if status.is_some() {
+        let status_desc = if status.unwrap() { "active" } else { "offline" };
+        tags.push(nostr_sdk::Tag::custom(nostr_sdk::TagKind::Custom("status".into()), [status_desc]));
+    }
 
     let client = nostr_sdk::Client::new(sec_key.clone());
 
@@ -68,8 +77,8 @@ async fn broadcast_nip_100(nostr_info: &server_config::NostrInfo) -> Result<(), 
     let created_at = nostr_sdk::Timestamp::now();
 
     let event = nostr_sdk::EventBuilder::new(
-        nostr_sdk::Kind::Custom(39101),  // Custom event kind
-        content.to_string(),  // Content
+        nostr_sdk::Kind::Custom(39101),
+        content.to_string(),
     )
         .tags(tags)
         .custom_created_at(created_at)
@@ -106,9 +115,16 @@ async fn main() {
 
         tokio::spawn(async move {
             let mut ticker = interval(Duration::from_secs(interval_seconds));
+
+            let start = SystemTime::now();
+            let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
+            let published_at = since_the_epoch.as_secs();
+
+            let timelock = config.lockheight_init;
+
             loop {
                 ticker.tick().await;
-                broadcast_nip_100(&nostr_info).await.unwrap();
+                broadcast_nip_100(&nostr_info, published_at, timelock).await.unwrap();
             }
         });
     } else {

@@ -17,6 +17,20 @@ pub struct NostrInfo {
     pub relay_interval: u32,
     /// Nostr private key
     pub nostr_privkey: String,
+    /// Sever url
+    pub server_url: String,
+    /// Optional server location
+    pub location: Option<String>,
+    /// Optional server status
+    pub active: Option<bool>,
+    /// Accepts onchain payments
+    pub onchain_payments: bool,
+    /// Accepts LN payments
+    pub ln_payments: bool,
+    /// Fee charged by the server
+    pub fee: f64,
+    /// Fee currency unit
+    pub unit: String,
 }
 
 /// Config struct storing all StataChain Entity config
