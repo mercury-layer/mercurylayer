@@ -16,6 +16,10 @@
     {
       "name": "openssl",
       "version>=": "3.4.0"
+    },
+    {
+      "name": "cpr",
+      "version>=": "1.11.1"
     }
   ]
 }

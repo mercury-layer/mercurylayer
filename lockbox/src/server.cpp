@@ -186,14 +186,8 @@ namespace lockbox {
     }
 
     std::string getKeyManager() {
-        const char* value = std::getenv("KEY_MANAGER");
-
-        if (value == nullptr) {
-            auto config = toml::parse_file("Settings.toml");
-            return config["general"]["key_manager"].as_string()->get();
-        } else {
-            return std::string(value);
-        }
+        return utils::getStringConfigVar(
+            utils::KEY_MANAGER.env_var, utils::KEY_MANAGER.toml_var_1, utils::KEY_MANAGER.toml_var_2);
     }
 
     void start_server() {

@@ -10,14 +10,8 @@
 namespace db_manager {
 
     std::string getDatabaseConnectionString() {
-        const char* value = std::getenv("ENCLAVE_DATABASE_URL");
-
-        if (value == nullptr) {
-            auto config = toml::parse_file("Settings.toml");
-            return config["general"]["database_connection_string"].as_string()->get();
-        } else {
-            return std::string(value);        
-        }
+        return utils::getStringConfigVar(
+            utils::DATABASE_URL.env_var, utils::DATABASE_URL.toml_var_1, utils::DATABASE_URL.toml_var_2);
     }
 
     // Assumes the buffer is large enough. In a real application, ensure buffer safety.
