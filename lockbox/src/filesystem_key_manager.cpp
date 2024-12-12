@@ -11,7 +11,8 @@
 namespace filesystem_key_manager {
 
     std::string getSeedFilePath() {
-        return utils::getStringConfigVar("SEED_FILEPATH", "filesystem", "seed_filepath");
+        return utils::getStringConfigVar(
+            utils::SEED_FILEPATH.env_var, utils::SEED_FILEPATH.toml_var_1, utils::SEED_FILEPATH.toml_var_2);
     }
 
     std::vector<uint8_t> get_seed() {

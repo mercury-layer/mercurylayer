@@ -107,11 +107,11 @@ namespace utils {
     }
 
     uint16_t getServerPort() {
-        const char* value = std::getenv("ENCLAVE_PORT");
+        const char* value = std::getenv(SERVER_PORT.env_var.c_str());
 
         if (value == nullptr) {
             auto config = toml::parse_file("Settings.toml");
-            int64_t server_port = config["general"]["server_port"].as_integer()->get();
+            int64_t server_port = config[SERVER_PORT.toml_var_1][SERVER_PORT.toml_var_2].as_integer()->get();
             return convertInt64ToUint16(server_port);
         } else {
             return convertStringToUint16(value);

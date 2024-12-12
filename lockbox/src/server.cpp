@@ -186,7 +186,8 @@ namespace lockbox {
     }
 
     std::string getKeyManager() {
-        return utils::getStringConfigVar("KEY_MANAGER", "general", "key_manager");
+        return utils::getStringConfigVar(
+            utils::KEY_MANAGER.env_var, utils::KEY_MANAGER.toml_var_1, utils::KEY_MANAGER.toml_var_2);
     }
 
     void start_server() {
