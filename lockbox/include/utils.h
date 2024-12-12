@@ -19,11 +19,18 @@ namespace utils {
     };
 
     static const config_var DATABASE_URL = {"LOCKBOX_DATABASE_URL", "general", "database_connection_string"};
-    static const config_var SEED_FILEPATH = {"SEED_FILEPATH", "filesystem", "seed_filepath"};
     static const config_var KEY_MANAGER = {"KEY_MANAGER", "general", "key_manager"};
     static const config_var SERVER_PORT = {"LOCKBOX_PORT", "general", "server_port"};
-    
 
+    static const config_var SEED_FILEPATH = {"SEED_FILEPATH", "filesystem", "seed_filepath"};
+
+    static const config_var GCLOUD_PROJECT_ID = {"GCLOUD_PROJECT_ID", "gcloud", "project_id"};
+    static const config_var GCLOUD_PROJECT_NUMBER = {"GCLOUD_PROJECT_NUMBER", "gcloud", "project_number"};
+    static const config_var GCLOUD_SECRET_MANAGER_KEY_NAME = {"GCLOUD_SECRET_MANAGER_KEY_NAME", "secretmanager", "key_name"};
+    static const config_var GCLOUD_LOCATION_ID = {"GCLOUD_LOCATION_ID", "gcloud", "location_id"};
+    static const config_var GCLOUD_KMS_RING = {"GCLOUD_KMS_RING", "kms", "ring"};
+    static const config_var GCLOUD_CRYPTO_KEY = {"GCLOUD_CRYPTO_KEY", "kms", "crypto_key"};
+    
     struct chacha20_poly1305_encrypted_data {
         size_t data_len;
         unsigned char* data;
