@@ -1,7 +1,7 @@
 [general]
 database_connection_string = "postgresql://postgres:postgres@localhost/enclave"
 server_port = 18080
-key_manager = "google_kms" # "google_kms", "hashicorp", "filesystem"
+key_manager = "hashicorp" # "google_kms", "hashicorp", "filesystem"
 [filesystem]
 seed_filepath = "./seed"
 [gcloud]

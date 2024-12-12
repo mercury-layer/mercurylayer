@@ -12,8 +12,11 @@ namespace hashicorp_key_manager {
 
         auto config = toml::parse_file("Settings.toml");
 
-        const std::string client_id = config["hashicorp"]["hcp_client_id"].as_string()->get();
-        const std::string client_secret = config["hashicorp"]["hcp_client_secret"].as_string()->get();
+        const std::string client_id = utils::getStringConfigVar(
+            utils::HASHICORP_HCP_CLIENT_ID.env_var, utils::HASHICORP_HCP_CLIENT_ID.toml_var_1, utils::HASHICORP_HCP_CLIENT_ID.toml_var_2);
+
+        const std::string client_secret = utils::getStringConfigVar(
+            utils::HASHICORP_HCP_CLIENT_SECRET.env_var, utils::HASHICORP_HCP_CLIENT_SECRET.toml_var_1, utils::HASHICORP_HCP_CLIENT_SECRET.toml_var_2);
 
         // Make the HTTP POST request using cpr
         cpr::Response response = cpr::Post(
@@ -52,10 +55,17 @@ namespace hashicorp_key_manager {
 
         auto config = toml::parse_file("Settings.toml");
 
-        const std::string organization_id = config["hashicorp"]["organization_id"].as_string()->get();
-        const std::string project_id = config["hashicorp"]["project_id"].as_string()->get();
-        const std::string app_name = config["hashicorp"]["app_name"].as_string()->get();
-        const std::string secret_name = config["hashicorp"]["secret_name"].as_string()->get();
+        const std::string organization_id = utils::getStringConfigVar(
+            utils::HASHICORP_ORGANIZATION_ID.env_var, utils::HASHICORP_ORGANIZATION_ID.toml_var_1, utils::HASHICORP_ORGANIZATION_ID.toml_var_2);
+
+        const std::string project_id = utils::getStringConfigVar(
+            utils::HASHICORP_PROJECT_ID.env_var, utils::HASHICORP_PROJECT_ID.toml_var_1, utils::HASHICORP_PROJECT_ID.toml_var_2);
+
+        const std::string app_name = utils::getStringConfigVar(
+            utils::HASHICORP_APP_NAME.env_var, utils::HASHICORP_APP_NAME.toml_var_1, utils::HASHICORP_APP_NAME.toml_var_2);
+
+        const std::string secret_name = utils::getStringConfigVar(
+            utils::HASHICORP_SECRET_NAME.env_var, utils::HASHICORP_SECRET_NAME.toml_var_1, utils::HASHICORP_SECRET_NAME.toml_var_2);
 
         // Construct the URL
         std::string url = "https://api.cloud.hashicorp.com/secrets/2023-11-28/organizations/" + organization_id +
