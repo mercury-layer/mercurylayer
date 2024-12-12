@@ -117,4 +117,15 @@ namespace utils {
             return convertStringToUint16(value);
         }
     }
+
+    std::string getStringConfigVar(const std::string& env_var, const std::string& toml_var_1, const std::string& toml_var_2) {
+        const char* value = std::getenv(env_var.c_str());
+
+        if (value == nullptr) {
+            auto config = toml::parse_file("Settings.toml");
+            return config[toml_var_1][toml_var_2].as_string()->get();
+        } else {
+            return std::string(value);
+        }
+    }
 }

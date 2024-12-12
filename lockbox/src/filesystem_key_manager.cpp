@@ -11,14 +11,7 @@
 namespace filesystem_key_manager {
 
     std::string getSeedFilePath() {
-        const char* value = std::getenv("SEED_FILEPATH");
-
-        if (value == nullptr) {
-            auto config = toml::parse_file("Settings.toml");
-            return config["filesystem"]["seed_filepath"].as_string()->get();
-        } else {
-            return std::string(value);        
-        }
+        return utils::getStringConfigVar("SEED_FILEPATH", "filesystem", "seed_filepath");
     }
 
     std::vector<uint8_t> get_seed() {

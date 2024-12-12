@@ -27,6 +27,8 @@ namespace utils {
 
     uint16_t getServerPort();
 
+    std::string getStringConfigVar(const std::string& env_var, const std::string& toml_var_1, const std::string& toml_var_2);
+
 } // namespace utils
 
 #endif // UTILS_H
