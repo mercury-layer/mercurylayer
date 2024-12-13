@@ -34,7 +34,7 @@ namespace utils {
     static const config_var HASHICORP_HCP_CLIENT_ID = {"HASHICORP_HCP_CLIENT_ID", "hashicorp", "hcp_client_id"};
     static const config_var HASHICORP_HCP_CLIENT_SECRET = {"HASHICORP_HCP_CLIENT_SECRET", "hashicorp", "hcp_client_secret"};
     static const config_var HASHICORP_ORGANIZATION_ID = {"HASHICORP_ORGANIZATION_ID", "hashicorp", "organization_id"};
-    static const config_var HASHICORP_PROJECT_ID = {"HASHICORP_ORGANIZATION_ID", "hashicorp", "project_id"};
+    static const config_var HASHICORP_PROJECT_ID = {"HASHICORP_PROJECT_ID", "hashicorp", "project_id"};
     static const config_var HASHICORP_APP_NAME = {"HASHICORP_APP_NAME", "hashicorp", "app_name"};
     static const config_var HASHICORP_SECRET_NAME = {"HASHICORP_SECRET_NAME", "hashicorp", "secret_name"};
     

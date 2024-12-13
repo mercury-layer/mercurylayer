@@ -5,7 +5,6 @@
 #include "google/cloud/location.h"
 #include <iostream>
 #include "utils.h"
-#include <toml++/toml.h>
 
 namespace key_manager {
 

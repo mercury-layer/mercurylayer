@@ -96,7 +96,7 @@ target_link_libraries(MercuryLockbox PRIVATE
     OpenSSL::Crypto)
 
 # Copy Settings.toml after building MercuryLockbox
-add_custom_command(TARGET MercuryLockbox POST_BUILD
-COMMAND ${CMAKE_COMMAND} -E copy_if_different
-${CMAKE_SOURCE_DIR}/Settings.toml
-$<TARGET_FILE_DIR:MercuryLockbox>/Settings.toml)
+# add_custom_command(TARGET MercuryLockbox POST_BUILD
+# COMMAND ${CMAKE_COMMAND} -E copy_if_different
+# ${CMAKE_SOURCE_DIR}/Settings.toml
+# $<TARGET_FILE_DIR:MercuryLockbox>/Settings.toml)

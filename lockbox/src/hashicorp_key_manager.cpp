@@ -4,13 +4,10 @@
 #include <cpr/cpr.h>
 #include <iostream>
 #include "utils.h"
-#include <toml++/toml.h>
 
 namespace hashicorp_key_manager {
 
     std::string get_access_token() {
-
-        auto config = toml::parse_file("Settings.toml");
 
         const std::string client_id = utils::getStringConfigVar(
             utils::HASHICORP_HCP_CLIENT_ID.env_var, utils::HASHICORP_HCP_CLIENT_ID.toml_var_1, utils::HASHICORP_HCP_CLIENT_ID.toml_var_2);
@@ -52,8 +49,6 @@ namespace hashicorp_key_manager {
     }
 
     std::string get_secret(const std::string& hcp_api_token) {
-
-        auto config = toml::parse_file("Settings.toml");
 
         const std::string organization_id = utils::getStringConfigVar(
             utils::HASHICORP_ORGANIZATION_ID.env_var, utils::HASHICORP_ORGANIZATION_ID.toml_var_1, utils::HASHICORP_ORGANIZATION_ID.toml_var_2);
