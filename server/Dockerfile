@@ -16,6 +16,8 @@ COPY ./Cargo.lock ./Cargo.lock
 
 # Copy the server source code
 COPY ./server ./server
+# Remove Settings.toml file
+RUN rm -f ./server/Settings.toml
 COPY ./lib ./lib
 COPY ./Rocket.toml ./server/Rocket.toml
 

@@ -116,14 +116,14 @@ impl ServerConfig {
         // Override with settings in file Rocket.toml if exists
         conf_rs.merge(File::with_name("Rocket").required(false));
 
-        let settings = ConfigRs::builder()
+        let settings: Option<ConfigRs> = ConfigRs::builder()
             .add_source(File::with_name("Settings"))
             .build()
-            .unwrap();
+            .ok();
 
         // Function to fetch a setting from the environment or fallback to the config file
         let get_env_or_config = |key: &str, env_var: &str| -> String {
-            env::var(env_var).unwrap_or_else(|_| settings.get_string(key).unwrap())
+            env::var(env_var).unwrap_or_else(|_| settings.as_ref().unwrap().get_string(key).unwrap())
         };
 
         let get_env_or_config_enclave = |key: &str, env_var: &str| -> Vec<Enclave> {
@@ -136,7 +136,7 @@ impl ServerConfig {
                 return serde_json::from_str::<Vec<Enclave>>(&env_enclaves.unwrap()).unwrap();
             }
 
-            settings.get::<Vec<Enclave>>(key).unwrap()
+            settings.as_ref().unwrap().get::<Vec<Enclave>>(key).unwrap()
         };
 
         let get_env_or_config_nostr_info = |key: &str, env_var: &str| -> Option<NostrInfo> {
@@ -150,7 +150,11 @@ impl ServerConfig {
                 return Some(res)
             }
 
-            let res = settings.get::<NostrInfo>(key);
+            if settings.as_ref().is_none() {
+                return None
+            }
+
+            let res = settings.as_ref().unwrap().get::<NostrInfo>(key);
 
             if res.is_ok() {
                 return Some(res.unwrap())

@@ -111,6 +111,9 @@ async fn main() {
     if config.nostr_info.is_some() {
         let nostr_info = config.nostr_info.unwrap();
 
+        /* println!("nostr_info: {:?}", nostr_info); */
+        println!("Nostr info found. Starting NIP-100 broadcast");
+
         let interval_seconds = nostr_info.relay_interval as u64;
 
         tokio::spawn(async move {
@@ -124,7 +127,12 @@ async fn main() {
 
             loop {
                 ticker.tick().await;
-                broadcast_nip_100(&nostr_info, published_at, timelock).await.unwrap();
+                let result = broadcast_nip_100(&nostr_info, published_at, timelock).await;
+                if let Err(e) = result {
+                    println!("Error: {:?}", e);
+                } /* else {
+                    println!("NIP-100 broadcasted");
+                } */
             }
         });
     } else {

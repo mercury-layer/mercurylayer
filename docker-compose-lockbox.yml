@@ -1,0 +1,72 @@
+services:
+
+  lockbox:
+    build:
+      context: lockbox
+      dockerfile: ./Dockerfile
+    depends_on:
+      - db_lockbox
+    environment:
+      - LOCKBOX_DATABASE_URL=postgres://postgres:postgres@db_lockbox:5432/enclave
+      - LOCKBOX_PORT=18080
+      - KEY_MANAGER=filesystem
+      - SEED_FILEPATH=./seed
+    ports:
+      - "18080:18080"
+
+  mercury-server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    depends_on:
+      - db_server
+    environment:
+      BITCOIN_NETWORK: regtest
+      LOCKHEIGHT_INIT: 1000
+      LH_DECREMENT: 10
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db_server
+      DB_PORT: 5432
+      DB_NAME: mercury
+      BATCH_TIMEOUT: 20
+      ENCLAVES: '[{"url": "http://lockbox:18080", "allow_deposit": true}]'
+      NOSTR_INFO: '{
+        "relay_server": "wss://relay.damus.io/", 
+        "relay_interval": 15, 
+        "nostr_privkey": "nsec17e0nvplcze4k7q9nazrw0k3aracwhg6vmuareewjp83ta89njw5spjcgzs", 
+        "server_url": "http://mercury_server.xyz", 
+        "location": "UK",
+        "active": true,
+        "onchain_payments": false,
+        "ln_payments": true,
+        "fee": 0.0001,
+        "unit": "BTC"
+        }'
+    ports:
+      - "8000:8000"
+
+  db_lockbox:
+    image: postgres:16.2
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: enclave
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_lockbox_data:/var/lib/postgresql/data
+
+  db_server:
+    image: postgres:16.2
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mercury
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_server_data:/var/lib/postgresql/data
+
+
+volumes:
+  postgres_lockbox_data:
+  postgres_server_data:
