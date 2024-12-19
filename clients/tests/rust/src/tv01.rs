@@ -97,7 +97,7 @@ pub async fn execute() -> Result<()> {
 
     w1_transfer_to_w2(&client_config, &wallet1, &wallet2).await?;
 
-    println!("TV05 - Result as reported.");
+    println!("TV01 - Result as reported.");
 
     Ok(())
 }
