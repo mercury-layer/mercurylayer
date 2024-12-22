@@ -8,10 +8,27 @@ import transaction from './transaction.js';
 import CoinStatus from './coin_enum.js';
 import utils from './utils.js';
 
-const getTokenFromServer = async (clientConfig) => {
+/* const getTokenFromServer = async (clientConfig) => {
 
     const statechain_entity_url = clientConfig.statechainEntity;
     const path = "tokens/token_init";
+    const url = statechain_entity_url + '/' + path;
+
+    const response = await axios.get(url);
+
+    if (response.status != 200) {
+        throw new Error(`Token error: ${response.data}`);
+    }
+
+    let token = response.data;
+
+    return token;
+} */
+
+const getTokenFromServer = async (clientConfig) => {
+
+    const statechain_entity_url = clientConfig.statechainEntity;
+    const path = "deposit/get_token";
     const url = statechain_entity_url + '/' + path;
 
     const response = await axios.get(url);
@@ -33,6 +50,12 @@ const getToken = async (clientConfig, walletName) => {
 
     // for dev purposes
     token.confirmed = true;
+    token.spent = false
+    token.btc_payment_address = "b1qdgjdmmsdp5hkrhwl6cxd3uvt6hvjvlmmzucdca";
+    token.fee = "0.0001";
+    token.lightning_invoice = "lnbc10u1pj3knpdsp5k9f25s2wpzewkf9c78pftkgnkuuz82erkcjml7zkgsp7znyhs5yspp5rxz3tkc7ydgln3u7ez6duhp0g6jpzgtnn7ph5xrjy6muh9xm07wqdp2f9h8vmmfvdjjqen0wgsy6ctfdeehgcteyp6x76m9dcxqyjw5qcqpj9qyysgq6z9whs8am75r6mzcgt76vlwgk5g9yq5g8xefdxx6few6d5why7fs7h5g2dx9hk7s60ywtnkyc0f3p0cha4a9kmgkq5jvu5e7hvsaawqpjtf8p4";
+    token.processor_id = "1";
+    token.expiry = "2024-12-26T17:29:50.013Z";
 
     wallet.tokens.push(token);
 

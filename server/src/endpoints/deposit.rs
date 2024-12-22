@@ -34,7 +34,7 @@ pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::C
     return status::Custom(Status::Ok, Json(response_body));
 }
 
-#[get("/tokens/token_init")]
+/* #[get("/tokens/token_init")]
 pub async fn token_init(statechain_entity: &State<StateChainEntity>) -> status::Custom<Json<Value>>  {
 
     let config = crate::server_config::ServerConfig::load();
@@ -73,7 +73,7 @@ pub async fn token_init(statechain_entity: &State<StateChainEntity>) -> status::
     let response_body = json!(token);
 
     return status::Custom(Status::Ok, Json(response_body));
-}
+} */
 
 fn get_random_enclave_index(statechain_id: &str, enclaves: &Vec<Enclave>) -> Result<usize, String> {
     let index_from_statechain_id = get_enclave_index_from_statechain_id(statechain_id, enclaves.len() as u32);
