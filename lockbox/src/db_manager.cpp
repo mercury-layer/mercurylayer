@@ -10,8 +10,7 @@
 namespace db_manager {
 
     std::string getDatabaseConnectionString() {
-        return utils::getStringConfigVar(
-            utils::DATABASE_URL.env_var, utils::DATABASE_URL.toml_var_1, utils::DATABASE_URL.toml_var_2);
+        return utils::getStringConfigVar(utils::DATABASE_URL);
     }
 
     // Assumes the buffer is large enough. In a real application, ensure buffer safety.

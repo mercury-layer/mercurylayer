@@ -30,7 +30,8 @@ add_library(LockboxLibrary
     src/server.cpp 
     src/utils.cpp 
     src/google_key_manager.cpp 
-    src/hashicorp_key_manager.cpp
+    src/hashicorp_api_key_manager.cpp
+    src/hashicorp_container_key_manager.cpp
     src/filesystem_key_manager.cpp
     src/enclave.cpp 
     src/monocypher.c

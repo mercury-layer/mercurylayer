@@ -1,7 +1,7 @@
 [general]
 database_connection_string = "postgresql://postgres:postgres@localhost/enclave"
 server_port = 18080
-key_manager = "filesystem" # "google_kms", "hashicorp", "filesystem"
+key_manager = "filesystem" # "google_kms", "hashicorp_container, "hashicorp_api", "filesystem"
 [filesystem]
 seed_filepath = "./seed"
 [gcloud]
@@ -13,10 +13,16 @@ key_name = "encrypted-key"
 [kms]
 ring = "enclave"
 crypto_key = "sealing"
-[hashicorp]
+[hashicorp_api]
 hcp_client_id = ""
 hcp_client_secret = ""
 organization_id = ""
 project_id = ""
 app_name = ""
 secret_name = ""
+[hashicorp_container]
+token = "2bbz80mr1zm0tfrjwxyq7f48ofgky848"
+url = "http://127.0.0.1:8200"
+path = "mercury-seed"
+mount_point = "secret"
+key_name = "seed"

@@ -1,19 +1,17 @@
-#include "hashicorp_key_manager.h"
+#include "hashicorp_api_key_manager.h"
 
 #include <crow.h>
 #include <cpr/cpr.h>
 #include <iostream>
 #include "utils.h"
 
-namespace hashicorp_key_manager {
+namespace hashicorp_api_key_manager {
 
     std::string get_access_token() {
 
-        const std::string client_id = utils::getStringConfigVar(
-            utils::HASHICORP_HCP_CLIENT_ID.env_var, utils::HASHICORP_HCP_CLIENT_ID.toml_var_1, utils::HASHICORP_HCP_CLIENT_ID.toml_var_2);
+        const std::string client_id = utils::getStringConfigVar(utils::HASHICORP_API_HCP_CLIENT_ID);
 
-        const std::string client_secret = utils::getStringConfigVar(
-            utils::HASHICORP_HCP_CLIENT_SECRET.env_var, utils::HASHICORP_HCP_CLIENT_SECRET.toml_var_1, utils::HASHICORP_HCP_CLIENT_SECRET.toml_var_2);
+        const std::string client_secret = utils::getStringConfigVar(utils::HASHICORP_API_HCP_CLIENT_SECRET);
 
         // Make the HTTP POST request using cpr
         cpr::Response response = cpr::Post(
@@ -50,17 +48,13 @@ namespace hashicorp_key_manager {
 
     std::string get_secret(const std::string& hcp_api_token) {
 
-        const std::string organization_id = utils::getStringConfigVar(
-            utils::HASHICORP_ORGANIZATION_ID.env_var, utils::HASHICORP_ORGANIZATION_ID.toml_var_1, utils::HASHICORP_ORGANIZATION_ID.toml_var_2);
+        const std::string organization_id = utils::getStringConfigVar(utils::HASHICORP_API_ORGANIZATION_ID);
 
-        const std::string project_id = utils::getStringConfigVar(
-            utils::HASHICORP_PROJECT_ID.env_var, utils::HASHICORP_PROJECT_ID.toml_var_1, utils::HASHICORP_PROJECT_ID.toml_var_2);
+        const std::string project_id = utils::getStringConfigVar(utils::HASHICORP_API_PROJECT_ID);
 
-        const std::string app_name = utils::getStringConfigVar(
-            utils::HASHICORP_APP_NAME.env_var, utils::HASHICORP_APP_NAME.toml_var_1, utils::HASHICORP_APP_NAME.toml_var_2);
+        const std::string app_name = utils::getStringConfigVar(utils::HASHICORP_API_APP_NAME);
 
-        const std::string secret_name = utils::getStringConfigVar(
-            utils::HASHICORP_SECRET_NAME.env_var, utils::HASHICORP_SECRET_NAME.toml_var_1, utils::HASHICORP_SECRET_NAME.toml_var_2);
+        const std::string secret_name = utils::getStringConfigVar(utils::HASHICORP_API_SECRET_NAME);
 
         // Construct the URL
         std::string url = "https://api.cloud.hashicorp.com/secrets/2023-11-28/organizations/" + organization_id +

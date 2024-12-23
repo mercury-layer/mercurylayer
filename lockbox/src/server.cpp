@@ -4,7 +4,8 @@
 #include "utils.h"
 #include "enclave.h"
 #include "google_key_manager.h"
-#include "hashicorp_key_manager.h"
+#include "hashicorp_api_key_manager.h"
+#include "hashicorp_container_key_manager.h"
 #include "filesystem_key_manager.h"
 #include "db_manager.h"
 #include <toml++/toml.h>
@@ -186,8 +187,7 @@ namespace lockbox {
     }
 
     std::string getKeyManager() {
-        return utils::getStringConfigVar(
-            utils::KEY_MANAGER.env_var, utils::KEY_MANAGER.toml_var_1, utils::KEY_MANAGER.toml_var_2);
+        return utils::getStringConfigVar(utils::KEY_MANAGER);
     }
 
     void start_server() {
@@ -197,11 +197,25 @@ namespace lockbox {
         auto key_provider = getKeyManager();
 
         if (key_provider == "filesystem") {
+
+            std::cout << "Using filesystem key manager" << std::endl;
+
             seed = filesystem_key_manager::get_seed();
         } else if (key_provider == "google_kms") {
+
+            std::cout << "Using Google KMS key manager" << std::endl;
+
             seed = key_manager::get_seed();
-        } else if (key_provider == "hashicorp") {
-            seed = hashicorp_key_manager::get_seed();
+        } else if (key_provider == "hashicorp_api") {
+
+            std::cout << "Using Hashicorp API key manager" << std::endl;
+
+            seed = hashicorp_api_key_manager::get_seed();
+        } else if (key_provider == "hashicorp_container") {
+
+            std::cout << "Using Hashicorp container key manager" << std::endl;
+
+            seed = hashicorp_container_key_manager::get_seed();
         } else {
             throw std::runtime_error("Invalid key manager: " + key_provider);
         }

@@ -128,4 +128,8 @@ namespace utils {
             return std::string(value);
         }
     }
+
+    std::string getStringConfigVar(const config_var& config_variable) {
+        return getStringConfigVar(config_variable.env_var, config_variable.toml_var_1, config_variable.toml_var_2);
+    }
 }

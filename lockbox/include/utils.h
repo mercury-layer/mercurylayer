@@ -31,12 +31,18 @@ namespace utils {
     static const config_var GCLOUD_KMS_RING = {"GCLOUD_KMS_RING", "kms", "ring"};
     static const config_var GCLOUD_CRYPTO_KEY = {"GCLOUD_CRYPTO_KEY", "kms", "crypto_key"};
 
-    static const config_var HASHICORP_HCP_CLIENT_ID = {"HASHICORP_HCP_CLIENT_ID", "hashicorp", "hcp_client_id"};
-    static const config_var HASHICORP_HCP_CLIENT_SECRET = {"HASHICORP_HCP_CLIENT_SECRET", "hashicorp", "hcp_client_secret"};
-    static const config_var HASHICORP_ORGANIZATION_ID = {"HASHICORP_ORGANIZATION_ID", "hashicorp", "organization_id"};
-    static const config_var HASHICORP_PROJECT_ID = {"HASHICORP_PROJECT_ID", "hashicorp", "project_id"};
-    static const config_var HASHICORP_APP_NAME = {"HASHICORP_APP_NAME", "hashicorp", "app_name"};
-    static const config_var HASHICORP_SECRET_NAME = {"HASHICORP_SECRET_NAME", "hashicorp", "secret_name"};
+    static const config_var HASHICORP_API_HCP_CLIENT_ID = {"HASHICORP_API_HCP_CLIENT_ID", "hashicorp_api", "hcp_client_id"};
+    static const config_var HASHICORP_API_HCP_CLIENT_SECRET = {"HASHICORP_API_HCP_CLIENT_SECRET", "hashicorp_api", "hcp_client_secret"};
+    static const config_var HASHICORP_API_ORGANIZATION_ID = {"HASHICORP_API_ORGANIZATION_ID", "hashicorp_api", "organization_id"};
+    static const config_var HASHICORP_API_PROJECT_ID = {"HASHICORP_API_PROJECT_ID", "hashicorp_api", "project_id"};
+    static const config_var HASHICORP_API_APP_NAME = {"HASHICORP_API_APP_NAME", "hashicorp_api", "app_name"};
+    static const config_var HASHICORP_API_SECRET_NAME = {"HASHICORP_API_SECRET_NAME", "hashicorp_api", "secret_name"};
+
+    static const config_var HASHICORP_CONTAINER_TOKEN = {"HASHICORP_CONTAINER_TOKEN", "hashicorp_container", "token"};
+    static const config_var HASHICORP_CONTAINER_URL = {"HASHICORP_CONTAINER_URL", "hashicorp_container", "url"};
+    static const config_var HASHICORP_CONTAINER_PATH = {"HASHICORP_CONTAINER_PATH", "hashicorp_container", "path"};
+    static const config_var HASHICORP_CONTAINER_MOUNT_POINT = {"HASHICORP_CONTAINER_MOUNT_POINT", "hashicorp_container", "mount_point"};
+    static const config_var HASHICORP_CONTAINER_KEY_NAME = {"HASHICORP_CONTAINER_KEY_NAME", "hashicorp_container", "key_name"};
     
     struct chacha20_poly1305_encrypted_data {
         size_t data_len;
@@ -56,6 +62,8 @@ namespace utils {
     uint16_t getServerPort();
 
     std::string getStringConfigVar(const std::string& env_var, const std::string& toml_var_1, const std::string& toml_var_2);
+
+    std::string getStringConfigVar(const config_var& config_variable);
 
 } // namespace utils
 

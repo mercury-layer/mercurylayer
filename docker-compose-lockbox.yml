@@ -1,6 +1,49 @@
+# This docker-compose file is an example of how to start the lockbox service and its dependencies.
+# First, you start the vault service, if you use it. The command is:
+# docker compose -f docker-compose-lockbox.yml --profile hashicorp-container up --build
+# Then, you start the Lockbox and Mercury server services. The command is:
+# docker compose -f docker-compose-lockbox.yml --profile mercury up --build
+# The Mercury service will start the Lockbox service and the Mercury server. The Lockbox service will connect to the vault service to get the seed value.
+
+# If you are not going to use the vault service, you do not need to run the first command.
+# Change the environment variables to match your configuration.
 services:
 
+  vault:
+    profiles:
+        - hashicorp-container
+    image: hashicorp/vault
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=2bbz80mr1zm0tfrjwxyq7f48ofgky848
+    ports:
+      - "8200:8200"
+
+  vault-init:
+    profiles:
+      - hashicorp-container
+    image: curlimages/curl
+    depends_on:
+      - vault
+    command: >
+      sh -c '
+        sleep 10 &&
+        curl --header "X-Vault-Token: 2bbz80mr1zm0tfrjwxyq7f48ofgky848" \
+             --header "Content-Type: application/json" \
+             --request POST \
+             --data '"'"'{"data": {"seed": "8b10a037120cf37441bd7623da2aa488c21889017ffb4f4d303b9dbcbada5bee"}}'"'"' \
+             http://vault:8200/v1/secret/data/mercury-seed &&
+        touch /tmp/healthy &&
+        tail -f /dev/null
+      '
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/healthy"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+
   lockbox:
+    profiles:
+      - mercury
     build:
       context: lockbox
       dockerfile: ./Dockerfile
@@ -9,17 +52,24 @@ services:
     environment:
       - LOCKBOX_DATABASE_URL=postgres://postgres:postgres@db_lockbox:5432/enclave
       - LOCKBOX_PORT=18080
-      - KEY_MANAGER=filesystem
-      - SEED_FILEPATH=./seed
+      - KEY_MANAGER=hashicorp_container
+      - HASHICORP_CONTAINER_TOKEN=2bbz80mr1zm0tfrjwxyq7f48ofgky848
+      - HASHICORP_CONTAINER_URL=http://vault:8200
+      - HASHICORP_CONTAINER_PATH=mercury-seed
+      - HASHICORP_CONTAINER_MOUNT_POINT=secret
+      - HASHICORP_CONTAINER_KEY_NAME=seed
     ports:
       - "18080:18080"
 
   mercury-server:
+    profiles:
+      - mercury
     build:
       context: .
       dockerfile: server/Dockerfile
     depends_on:
       - db_server
+      - lockbox
     environment:
       BITCOIN_NETWORK: regtest
       LOCKHEIGHT_INIT: 1000
@@ -47,6 +97,8 @@ services:
       - "8000:8000"
 
   db_lockbox:
+    profiles:
+      - mercury
     image: postgres:16.2
     environment:
       POSTGRES_PASSWORD: postgres
@@ -57,6 +109,8 @@ services:
       - postgres_lockbox_data:/var/lib/postgresql/data
 
   db_server:
+    profiles:
+      - mercury
     image: postgres:16.2
     environment:
       POSTGRES_PASSWORD: postgres
