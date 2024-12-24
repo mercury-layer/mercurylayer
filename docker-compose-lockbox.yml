@@ -10,8 +10,6 @@
 services:
 
   vault:
-    profiles:
-        - hashicorp-container
     image: hashicorp/vault
     environment:
       - VAULT_DEV_ROOT_TOKEN_ID=2bbz80mr1zm0tfrjwxyq7f48ofgky848
@@ -19,8 +17,6 @@ services:
       - "8200:8200"
 
   vault-init:
-    profiles:
-      - hashicorp-container
     image: curlimages/curl
     depends_on:
       - vault
@@ -42,13 +38,12 @@ services:
       retries: 30
 
   lockbox:
-    profiles:
-      - mercury
     build:
       context: lockbox
       dockerfile: ./Dockerfile
     depends_on:
       - db_lockbox
+      - vault-init
     environment:
       - LOCKBOX_DATABASE_URL=postgres://postgres:postgres@db_lockbox:5432/enclave
       - LOCKBOX_PORT=18080
@@ -62,8 +57,6 @@ services:
       - "18080:18080"
 
   mercury-server:
-    profiles:
-      - mercury
     build:
       context: .
       dockerfile: server/Dockerfile
@@ -97,8 +90,6 @@ services:
       - "8000:8000"
 
   db_lockbox:
-    profiles:
-      - mercury
     image: postgres:16.2
     environment:
       POSTGRES_PASSWORD: postgres
@@ -109,8 +100,6 @@ services:
       - postgres_lockbox_data:/var/lib/postgresql/data
 
   db_server:
-    profiles:
-      - mercury
     image: postgres:16.2
     environment:
       POSTGRES_PASSWORD: postgres
