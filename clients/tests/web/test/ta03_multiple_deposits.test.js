@@ -4,7 +4,7 @@ import axios from 'axios';
 import CoinStatus from 'mercuryweblib/coin_enum.js';
 import clientConfig from '../ClientConfig.js';
 import mercuryweblib from 'mercuryweblib';
-import { generateBlocks, depositCoin } from '../test-utils.js';
+import { generateBlocks, depositCoin, checkDepositsConfirmation, handleTokenResponse } from '../test-utils.js';
 
 async function validateBackupTransactions(backupTransactions, interval) {
     let currentTxid = null;
@@ -40,7 +40,7 @@ async function validateBackupTransactions(backupTransactions, interval) {
     }
 }
 
-async function checkDepositsConfirmation(address) {
+/* async function checkDepositsConfirmation(address) {
     let allDepositsConfirmed = false;
     const startTime = Date.now();
     const timeoutDuration = 60000; // 1 minute in milliseconds
@@ -64,7 +64,7 @@ async function checkDepositsConfirmation(address) {
     }
     
     return allDepositsConfirmed;
-}
+} */
 
 describe('TA03 - Multiple Deposits', () => {
     test("basic workflow", async () => {
@@ -75,11 +75,13 @@ describe('TA03 - Multiple Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb03_1");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_1");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
     
@@ -305,11 +307,13 @@ describe('TA03 - Multiple Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb03_2");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_2");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = await handleTokenResponse(tokenResponse);
         
         let amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
 
@@ -572,11 +576,13 @@ describe('TA03 - Multiple Deposits', () => {
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_3");
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03_3");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
 
@@ -809,11 +815,13 @@ describe('TA03 - Multiple Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb03_4");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_4");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = await handleTokenResponse(tokenResponse);
         
         let amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
 
@@ -1057,11 +1065,13 @@ describe('TA03 - Multiple Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb03_5");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb03_5");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
     

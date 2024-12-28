@@ -10,7 +10,6 @@ import transfer_receive from './transfer_receive.js';
 import lightningLatch from './lightning-latch.js';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeInvoice } from '../../tests/web/test-utils.js';
-import { util } from 'chai';
 import utils from './utils.js';
 
 const greet = async () => {
@@ -34,12 +33,11 @@ const createWallet = async (clientConfig, name) => {
 }
 
 const newToken = async (clientConfig, walletName) => {
-  const token = await deposit.getToken(clientConfig, walletName);
-  return token;
+  return await deposit.getToken(clientConfig, walletName);
 }
 
-const getDepositBitcoinAddress = async (clientConfig, walletName, amount) => {
-  const address_info = await deposit.getDepositBitcoinAddress(clientConfig, walletName, amount);
+const getDepositBitcoinAddress = async (clientConfig, walletName, token_id, amount) => {
+  const address_info = await deposit.getDepositBitcoinAddress(clientConfig, walletName, token_id, amount);
   return address_info;
 }
 
