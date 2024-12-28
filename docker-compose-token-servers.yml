@@ -1,5 +1,18 @@
 services:
 
+  esplora:
+    image: blockstream/esplora
+    container_name: esplora-container
+    ports:
+      - "50001:50001"
+      - "50002:50002"
+      - "8094:80"
+    volumes:
+      - ./data_bitcoin_regtest:/data
+    environment:
+      - CORS_ALLOW=*
+    command: /srv/explorer/run.sh bitcoin-regtest explorer
+
   vault:
     image: hashicorp/vault
     environment:
@@ -47,13 +60,37 @@ services:
     ports:
       - "18080:18080"
 
+  token-server-v2:
+    build:
+      context: .
+      dockerfile: ./token-server-v2/Dockerfile
+    container_name: mercurylayer-token-server-v2-1
+    environment:
+      PUBLIC_KEY_DESCRIPTOR: wpkh([656a457c/84'/1'/0']tpubDCTXiLu1wcqUwQK6QMPPUTBzbRjsqMABzCvd5vG22KGoA95cTG1VkszQQJyx24UP8KEJVKrKRDRtUPodHVV59CfNqUkXjKUagowHJVSWq4C/0/*)#vn0n5xcd
+      BITCOIN_NETWORK: regtest
+      ELECTRUM_SERVER: tcp://esplora:50001
+      FEE: 10000
+      CONFIRMATION_TARGET: 2
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db_server
+      DB_PORT: 5432
+      DB_NAME: mercury
+    ports:
+      - "8001:8001"
+    depends_on:
+      - esplora
+      - db_server
+
   mercury-server:
     build:
       context: .
       dockerfile: server/Dockerfile
+    container_name: mercurylayer-mercury-server-1
     depends_on:
       - db_server
       - lockbox
+      - token-server-v2
     environment:
       BITCOIN_NETWORK: regtest
       LOCKHEIGHT_INIT: 1000
@@ -77,6 +114,7 @@ services:
         "fee": 0.0001,
         "unit": "BTC"
         }'
+      TOKEN_SERVER_URL: http://token-server-v2:8001
     ports:
       - "8000:8000"
 
@@ -99,7 +137,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_server_data:/var/lib/postgresql/data
-
 
 volumes:
   postgres_lockbox_data:
