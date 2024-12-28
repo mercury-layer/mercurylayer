@@ -1,0 +1,7 @@
+public_key_descriptor="wpkh([656a457c/84'/1'/0']tpubDCTXiLu1wcqUwQK6QMPPUTBzbRjsqMABzCvd5vG22KGoA95cTG1VkszQQJyx24UP8KEJVKrKRDRtUPodHVV59CfNqUkXjKUagowHJVSWq4C/0/*)#vn0n5xcd"
+network = "regtest" # mainnet, testnet, signet or regtest
+db_user = "postgres"
+db_password = "postgres"
+db_host = "localhost"
+db_port = 5432
+db_name = "mercury"
