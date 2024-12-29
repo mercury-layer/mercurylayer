@@ -4,12 +4,17 @@ use sqlx::postgres::PgConnectOptions;
 use std::{env, fs};
 
 /// Config struct storing all StataChain Entity config
-#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerConfig {
     /// Public key descriptor for onchain addresses
     pub public_key_descriptor: String,
     /// Bitcoin network
     pub network: String,
+    /// Electrum client
+    pub electrum_client: electrum_client::Client,
+    /// Token fee value (satoshis)
+    pub fee: u64,
+    /// Confirmation target
+    pub confirmation_target: u32,
     /// Database user
     pub db_user: String,
     /// Database password
@@ -22,30 +27,8 @@ pub struct ServerConfig {
     pub db_name: String,
 }
 
-impl Default for ServerConfig {
-    fn default() -> ServerConfig {
-        ServerConfig {
-            public_key_descriptor: String::from(""),
-            network: String::from("regtest"),
-            db_user: String::from("postgres"),
-            db_password: String::from("postgres"),
-            db_host: String::from("db_server"),
-            db_port: 5432,
-            db_name: String::from("mercury"),
-        }
-    }
-}
-
 impl ServerConfig {
     pub fn load() -> Self {
-        let mut conf_rs = ConfigRs::default();
-        let _ = conf_rs
-            // First merge struct default config
-            .merge(ConfigRs::try_from(&ServerConfig::default()).unwrap());
-        // Override with settings in file Settings.toml if exists
-        conf_rs.merge(File::with_name("Settings").required(false));
-        // Override with settings in file Rocket.toml if exists
-        conf_rs.merge(File::with_name("Rocket").required(false));
 
         let settings = ConfigRs::builder()
             .add_source(File::with_name("Settings"))
@@ -57,6 +40,9 @@ impl ServerConfig {
             env::var(env_var).unwrap_or_else(|_| settings.get_string(key).unwrap())
         };
 
+        let electrum_server_url = get_env_or_config("electrum_server", "ELECTRUM_SERVER");
+        let electrum_client = electrum_client::Client::new(electrum_server_url.as_str()).unwrap();
+
         ServerConfig {
             db_user: get_env_or_config("db_user", "DB_USER"),
             db_password: get_env_or_config("db_password", "DB_PASSWORD"),
@@ -65,6 +51,9 @@ impl ServerConfig {
             db_name: get_env_or_config("db_name", "DB_NAME"),
             public_key_descriptor: get_env_or_config("public_key_descriptor", "PUBLIC_KEY_DESCRIPTOR"),
             network: get_env_or_config("network", "BITCOIN_NETWORK"),
+            electrum_client,
+            fee: get_env_or_config("fee", "FEE").parse::<u64>().unwrap(),
+            confirmation_target: get_env_or_config("confirmation_target", "CONFIRMATION_TARGET").parse::<u32>().unwrap(),
         }
     }
 
