@@ -138,7 +138,7 @@ pub async fn get_token(client_config: &ClientConfig) -> Result<String> {
 
     let value = response.text().await?;
 
-    let token: mercurylib::deposit::TokenID = serde_json::from_str(value.as_str())?;
+    let token: mercurylib::deposit::TokenResponse = serde_json::from_str(value.as_str())?;
 
     return Ok(token.token_id);
 }

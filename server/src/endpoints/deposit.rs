@@ -7,10 +7,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{Value, json};
 use crate::{server::StateChainEntity, server_config::Enclave};
 
-#[get("/deposit/get_token")]
-pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::Custom<Json<Value>>  {
-
-    let config = crate::server_config::ServerConfig::load();
+pub async fn get_token_no_server(statechain_entity: &State<StateChainEntity>, config: &crate::server_config::ServerConfig) -> status::Custom<Json<Value>>  {
 
     if config.network == "mainnet" {
         let response_body = json!({
@@ -25,13 +22,66 @@ pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::C
 
     crate::database::deposit::insert_new_token(&statechain_entity.pool, &token_id).await;
 
-    let token = mercurylib::deposit::TokenID {
-        token_id
+    let token = mercurylib::deposit::TokenResponse {
+        token_id,
+        payment_method: "free".to_string(),
+        deposit_address: None,
+        fee: 0,
     };
 
     let response_body = json!(token);
 
     return status::Custom(Status::Ok, Json(response_body));
+}
+
+pub async fn get_token_from_server(statechain_entity: &State<StateChainEntity>, config: &crate::server_config::ServerConfig) -> status::Custom<Json<Value>>  {
+
+    let client: reqwest::Client = reqwest::Client::new();
+    let request = client.get(&format!("{}/token/token_gen", config.token_server_url.as_ref().unwrap()));
+
+    let value = match request.send().await {
+        Ok(response) => {
+            let text = response.text().await.unwrap();
+            text
+        },
+        Err(err) => {
+            let response_body = json!({
+                "error": "Internal Server Error",
+                "message": err.to_string()
+            });
+        
+            return status::Custom(Status::InternalServerError, Json(response_body));
+        },
+    };
+
+    let response: serde_json::Value = serde_json::from_str(value.as_str()).expect(&format!("failed to parse: {}", value.as_str()));
+
+    let token_id = response.get("token_id").unwrap().as_str().unwrap().to_string();
+    let deposit_address = response.get("deposit_address").unwrap().as_str().unwrap().to_string();
+    let fee = response.get("fee").unwrap().as_u64().unwrap();
+
+    let token = mercurylib::deposit::TokenResponse {
+        token_id,
+        payment_method: "onchain".to_string(),
+        deposit_address: Some(deposit_address),
+        fee,
+    };
+
+    let response_body = json!(token);
+
+    return status::Custom(Status::Ok, Json(response_body));
+}
+
+#[get("/deposit/get_token")]
+pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::Custom<Json<Value>>  {
+
+    let config = crate::server_config::ServerConfig::load();
+
+    if config.token_server_url.is_none() {
+        return get_token_no_server(statechain_entity, &config).await;
+    } else {
+        return get_token_from_server(statechain_entity, &config).await;
+    }
 }
 
 /* #[get("/tokens/token_init")]
