@@ -46,11 +46,13 @@ const getToken = async (clientConfig, walletName) => {
 
     let wallet = storageManager.getWallet(walletName);
     
-    let token = await getTokenFromServer(clientConfig);
+    let token_response = await getTokenFromServer(clientConfig);
 
     // for dev purposes
-    token.confirmed = true;
-    token.spent = false
+    let token = {};
+    token.token_id = token_response.token_id;
+    token.confirmed = token_response.confirmed;
+    token.spent = token_response.spent;
     token.btc_payment_address = "b1qdgjdmmsdp5hkrhwl6cxd3uvt6hvjvlmmzucdca";
     token.fee = "0.0001";
     token.lightning_invoice = "lnbc10u1pj3knpdsp5k9f25s2wpzewkf9c78pftkgnkuuz82erkcjml7zkgsp7znyhs5yspp5rxz3tkc7ydgln3u7ez6duhp0g6jpzgtnn7ph5xrjy6muh9xm07wqdp2f9h8vmmfvdjjqen0wgsy6ctfdeehgcteyp6x76m9dcxqyjw5qcqpj9qyysgq6z9whs8am75r6mzcgt76vlwgk5g9yq5g8xefdxx6few6d5why7fs7h5g2dx9hk7s60ywtnkyc0f3p0cha4a9kmgkq5jvu5e7hvsaawqpjtf8p4";
