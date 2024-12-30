@@ -1,13 +1,9 @@
-use std::sync::Mutex;
-
 use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 use crate::server_config::ServerConfig;
 
 pub struct TokenServerState {
-    pub config: ServerConfig,
     pub pool: Pool<Postgres>,
-    key_index: Mutex<u64>,
 }
 
 impl TokenServerState {
@@ -23,12 +19,8 @@ impl TokenServerState {
             .await
             .unwrap();
 
-        let key_index = 0;
-
         TokenServerState {
-            config,
             pool,
-            key_index: Mutex::new(key_index),
         }
     }
 }

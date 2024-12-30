@@ -173,6 +173,10 @@ impl ServerConfig {
                 return Some(env_var.unwrap());
             }
 
+            if settings.as_ref().is_none() {
+                return None
+            }
+
             let res = settings.as_ref().unwrap().get::<String>(key);
 
             if res.is_ok() {

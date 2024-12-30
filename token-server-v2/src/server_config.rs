@@ -1,7 +1,6 @@
-use config::{Config as ConfigRs, Environment, File};
-use serde::{Serialize, Deserialize};
+use config::{Config as ConfigRs, File};
 use sqlx::postgres::PgConnectOptions;
-use std::{env, fs};
+use std::env;
 
 /// Config struct storing all StataChain Entity config
 pub struct ServerConfig {
