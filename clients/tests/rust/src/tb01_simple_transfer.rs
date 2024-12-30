@@ -29,7 +29,7 @@ async fn sucessfully_transfer(client_config: &ClientConfig, wallet1: &Wallet, wa
 
     let token_response = mercuryrustlib::deposit::get_token(client_config).await?;
 
-    let token_id = token_response.token_id;
+    let token_id = crate::utils::handle_token_response(client_config, &token_response).await?;
 
     let amount = 1000;
 

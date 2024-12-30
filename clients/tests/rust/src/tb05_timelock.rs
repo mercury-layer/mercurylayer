@@ -14,7 +14,7 @@ pub async fn old_state_broadcasted(client_config: &ClientConfig, wallet1: &Walle
 
     let token_response = mercuryrustlib::deposit::get_token(client_config).await?;
 
-    let token_id = token_response.token_id;
+    let token_id = crate::utils::handle_token_response(client_config, &token_response).await?;
 
     let deposit_address = mercuryrustlib::deposit::get_deposit_bitcoin_address(&client_config, &wallet1.name, &token_id, amount).await?;
 

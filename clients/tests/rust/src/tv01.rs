@@ -11,7 +11,7 @@ async fn w1_transfer_to_w2(client_config: &ClientConfig, wallet1: &Wallet, walle
 
     let token_response = mercuryrustlib::deposit::get_token(client_config).await?;
 
-    let token_id = token_response.token_id;
+    let token_id = crate::utils::handle_token_response(client_config, &token_response).await?;
 
     let deposit_address = mercuryrustlib::deposit::get_deposit_bitcoin_address(&client_config, &wallet1.name, &token_id, amount).await?;
 

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use bitcoin::hashes::{sha256, Hash};
+use bitcoin::{hashes::{sha256, Hash}, network::message};
 use rocket::{serde::json::Json, response::status, State, http::Status};
 use secp256k1_zkp::{XOnlyPublicKey, schnorr::Signature, Message, Secp256k1, PublicKey};
 use serde::{Serialize, Deserialize};
@@ -27,6 +27,7 @@ pub async fn get_token_no_server(statechain_entity: &State<StateChainEntity>, co
         payment_method: "free".to_string(),
         deposit_address: None,
         fee: 0,
+        confirmation_target: 0,
     };
 
     let response_body = json!(token);
@@ -34,7 +35,7 @@ pub async fn get_token_no_server(statechain_entity: &State<StateChainEntity>, co
     return status::Custom(Status::Ok, Json(response_body));
 }
 
-pub async fn get_token_from_server(statechain_entity: &State<StateChainEntity>, config: &crate::server_config::ServerConfig) -> status::Custom<Json<Value>>  {
+pub async fn get_token_from_server(config: &crate::server_config::ServerConfig) -> status::Custom<Json<Value>>  {
 
     let client: reqwest::Client = reqwest::Client::new();
     let request = client.get(&format!("{}/token/token_gen", config.token_server_url.as_ref().unwrap()));
@@ -46,11 +47,18 @@ pub async fn get_token_from_server(statechain_entity: &State<StateChainEntity>, 
         },
         Err(err) => {
             let response_body = json!({
-                "error": "Internal Server Error",
                 "message": err.to_string()
             });
+
+            let err = err.status();
+            let status = if err.is_some() {
+                Status::from_code(err.unwrap().as_u16()).unwrap_or(Status::InternalServerError)
+            } else {
+                Status::InternalServerError
+            };
+
         
-            return status::Custom(Status::InternalServerError, Json(response_body));
+            return status::Custom(status, Json(response_body));
         },
     };
 
@@ -59,12 +67,14 @@ pub async fn get_token_from_server(statechain_entity: &State<StateChainEntity>, 
     let token_id = response.get("token_id").unwrap().as_str().unwrap().to_string();
     let deposit_address = response.get("deposit_address").unwrap().as_str().unwrap().to_string();
     let fee = response.get("fee").unwrap().as_u64().unwrap();
+    let confirmation_target = response.get("confirmation_target").unwrap().as_u64().unwrap();
 
     let token = mercurylib::deposit::TokenResponse {
         token_id,
         payment_method: "onchain".to_string(),
         deposit_address: Some(deposit_address),
         fee,
+        confirmation_target,
     };
 
     let response_body = json!(token);
@@ -80,7 +90,7 @@ pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::C
     if config.token_server_url.is_none() {
         return get_token_no_server(statechain_entity, &config).await;
     } else {
-        return get_token_from_server(statechain_entity, &config).await;
+        return get_token_from_server(&config).await;
     }
 }
 
@@ -152,6 +162,60 @@ fn get_enclave_index_from_statechain_id(statechain_id: &str, enclave_array_len: 
     return (random_number % enclave_array_len as u128) as usize;
 }
 
+struct TokenStatusResponse {
+    confirmed: bool,
+    spent: bool,
+    err: bool,
+    status: Option<Status>,
+    err_message: Option<String>
+}
+
+pub async fn check_token_status(token_id: &str) -> TokenStatusResponse{
+
+    let config = crate::server_config::ServerConfig::load();
+
+    let client: reqwest::Client = reqwest::Client::new();
+    let request = client.get(&format!("{}/token/token_verify/{}", config.token_server_url.as_ref().unwrap(), token_id));
+
+    let value = match request.send().await {
+        Ok(response) => {
+            let text = response.text().await.unwrap();
+            text
+        },
+        Err(err) => {
+            let message = err.to_string();
+
+            let err = err.status();
+            let status = if err.is_some() {
+                Status::from_code(err.unwrap().as_u16()).unwrap_or(Status::InternalServerError)
+            } else {
+                Status::InternalServerError
+            };
+
+            return TokenStatusResponse {
+                confirmed: false,
+                spent: false,
+                err: true,
+                status: Some(status),
+                err_message: Some(message),
+            };
+        },
+    };
+
+    let response: serde_json::Value = serde_json::from_str(value.as_str()).expect(&format!("failed to parse: {}", value.as_str()));
+
+    let confirmed = response.get("confirmed").unwrap().as_bool().unwrap();
+    let spent = response.get("spent").unwrap().as_bool().unwrap();
+
+    return TokenStatusResponse {
+        confirmed,
+        spent,
+        err: false,
+        status: None,
+        err_message: None,
+    };
+}
+
 #[post("/deposit/init/pod", format = "json", data = "<deposit_msg1>")]
 pub async fn post_deposit(statechain_entity: &State<StateChainEntity>, deposit_msg1: Json<mercurylib::deposit::DepositMsg1>) -> status::Custom<Json<Value>> {
 
@@ -184,7 +248,7 @@ pub async fn post_deposit(statechain_entity: &State<StateChainEntity>, deposit_m
         return status::Custom(Status::BadRequest, Json(response_body));
     }
 
-    let valid_token =  crate::database::deposit::get_token_status(&statechain_entity.pool, &token_id).await;
+    /* let valid_token =  crate::database::deposit::get_token_status(&statechain_entity.pool, &token_id).await;
 
     if valid_token.is_none() {
         let response_body = json!({
@@ -202,6 +266,56 @@ pub async fn post_deposit(statechain_entity: &State<StateChainEntity>, deposit_m
         });
     
         return status::Custom(Status::Gone, Json(response_body));
+    } */
+
+   let token_info = crate::database::deposit::get_token_info(&statechain_entity.pool, &token_id).await;
+
+   if token_info.is_none() {
+        let response_body = json!({
+            "error": "Deposit Error",
+            "message": "Token ID not found."
+        });
+
+        return status::Custom(Status::NotFound, Json(response_body));
+    }
+
+    let token_info = token_info.unwrap();
+
+    if token_info.spent {
+        let response_body = json!({
+            "message": "Token already spent."
+        });
+
+        return status::Custom(Status::Gone, Json(response_body));
+    }
+
+    if !token_info.confirmed {
+
+        let token_status_response = check_token_status(&token_id).await;
+
+        if token_status_response.err {
+            let response_body = json!({
+                "message": token_status_response.err_message.unwrap()
+            });
+        
+            return status::Custom(token_status_response.status.unwrap(), Json(response_body));
+        }
+
+        if token_status_response.spent {
+            let response_body = json!({
+                "message": "Token already spent."
+            });
+    
+            return status::Custom(Status::Gone, Json(response_body));
+        }
+
+        if !token_status_response.confirmed {
+            let response_body = json!({
+                "message": "Token not confirmed."
+            });
+        
+            return status::Custom(Status::Gone, Json(response_body));
+        }
     }
 
     #[derive(Debug, Serialize, Deserialize)]

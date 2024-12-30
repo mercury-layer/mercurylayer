@@ -11,7 +11,7 @@ async fn withdraw_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let token_response = mercuryrustlib::deposit::get_token(client_config).await?;
 
-    let token_id = token_response.token_id;
+    let token_id = crate::utils::handle_token_response(client_config, &token_response).await?;
 
     let deposit_address = mercuryrustlib::deposit::get_deposit_bitcoin_address(&client_config, &wallet1.name, &token_id, amount).await?;
 
@@ -111,7 +111,7 @@ async fn transfer_flow(client_config: &ClientConfig, wallet1: &Wallet, wallet2: 
 
     let token_response = mercuryrustlib::deposit::get_token(client_config).await?;
 
-    let token_id = token_response.token_id;
+    let token_id = crate::utils::handle_token_response(client_config, &token_response).await?;
 
     let deposit_address = mercuryrustlib::deposit::get_deposit_bitcoin_address(&client_config, &wallet1.name, &token_id, amount).await?;
 

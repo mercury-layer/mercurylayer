@@ -1,8 +1,7 @@
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
-use bitcoin::network;
 use electrum_client::{ElectrumApi, ListUnspentRes};
-use miniscript::{bitcoin::bech32::primitives::checksum, Descriptor, DescriptorPublicKey};
+use miniscript::{Descriptor, DescriptorPublicKey};
 use rocket::{serde::json::Json, response::status, State, http::Status};
 use serde::{Serialize, Deserialize};
 use serde_json::{Value, json};
@@ -87,6 +86,7 @@ pub async fn token_gen(token_server_state: &State<TokenServerState>) -> status::
         "token_id": token_id,
         "deposit_address": onchain_address,
         "fee": server_config.fee,
+        "confirmation_target": server_config.confirmation_target,
     });
     
     status::Custom(Status::Ok, Json(response_body))

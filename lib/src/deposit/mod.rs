@@ -16,6 +16,7 @@ pub struct TokenResponse {
     pub payment_method: String,
     pub deposit_address: Option<String>,
     pub fee: u64,
+    pub confirmation_target: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
