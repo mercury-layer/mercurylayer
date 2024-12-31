@@ -3,7 +3,7 @@ import { describe, test, expect } from "vitest";
 import CoinStatus from 'mercuryweblib/coin_enum.js';
 import clientConfig from '../ClientConfig.js';
 import mercuryweblib from 'mercuryweblib';
-import { generateBlocks, depositCoin, sleep } from '../test-utils.js';
+import { generateBlocks, depositCoin, sleep, handleTokenResponse } from '../test-utils.js';
 
 describe('TB03 - Simple Atomic Transfer', () => {
     test("expected flow", async () => {
@@ -21,8 +21,8 @@ describe('TB03 - Simple Atomic Transfer', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 
@@ -116,8 +116,8 @@ describe('TB03 - Atomic swap with second batchid missing', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 
@@ -211,8 +211,8 @@ describe('TB03 - Atomic swap without first batchid', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 
@@ -306,8 +306,8 @@ describe('TB03 - Atomic swap with timeout', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 
@@ -418,8 +418,8 @@ describe('TB03 - Atomic swap with first party steal', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 
@@ -530,8 +530,8 @@ describe('TB03 - Atomic swap with second party steal', () => {
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
 

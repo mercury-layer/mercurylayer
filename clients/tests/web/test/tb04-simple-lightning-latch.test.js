@@ -3,7 +3,7 @@ import { describe, test, expect } from "vitest";
 import CoinStatus from 'mercuryweblib/coin_enum.js';
 import clientConfig from '../ClientConfig.js';
 import mercuryweblib from 'mercuryweblib';
-import { generateBlocks, depositCoin, sleep, generateInvoice, payInvoice, payHoldInvoice, settleInvoice, decodeInvoice } from '../test-utils.js';
+import { generateBlocks, depositCoin, sleep, generateInvoice, payInvoice, payHoldInvoice, settleInvoice, decodeInvoice, handleTokenResponse } from '../test-utils.js';
 
 async function sha256(preimage) {
     let buffer;
@@ -46,7 +46,7 @@ describe('TB04 - Simple Lightning Latch', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
@@ -125,8 +125,8 @@ describe('TB04 - The sender tries to get the pre-image before the batch is unloc
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
         
@@ -229,8 +229,8 @@ describe('TB04 - Statecoin sender can recover (resend their coin) after batch ti
         let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
         let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
 
-        let token_id1 = tokenResponse1.token_id;
-        let token_id2 = tokenResponse2.token_id;
+        let token_id1 = await handleTokenResponse(tokenResponse1);
+        let token_id2 = await handleTokenResponse(tokenResponse2);
 
         const amount = 1000;
         
@@ -342,7 +342,7 @@ describe('TB04 - Statecoin trade with invoice creation, payment and settlement',
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
@@ -422,7 +422,7 @@ describe('TB04 - Receiver tries to transfer invoice amount to another invoice be
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
@@ -515,7 +515,7 @@ describe('Statecoin sender sends coin without batch_id (receiver should still be
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
@@ -597,7 +597,7 @@ describe('TB04 - Sender sends coin without batch_id, and then resends to a diffe
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
@@ -677,7 +677,7 @@ describe('Coin receiver creates a non hold invoice, and sends to sender (i.e. an
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         

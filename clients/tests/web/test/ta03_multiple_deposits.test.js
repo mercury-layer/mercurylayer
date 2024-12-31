@@ -4,7 +4,7 @@ import axios from 'axios';
 import CoinStatus from 'mercuryweblib/coin_enum.js';
 import clientConfig from '../ClientConfig.js';
 import mercuryweblib from 'mercuryweblib';
-import { generateBlocks, depositCoin } from '../test-utils.js';
+import { generateBlocks, depositCoin, checkDepositsConfirmation, handleTokenResponse } from '../test-utils.js';
 
 async function validateBackupTransactions(backupTransactions, interval) {
     let currentTxid = null;
@@ -40,7 +40,7 @@ async function validateBackupTransactions(backupTransactions, interval) {
     }
 }
 
-async function checkDepositsConfirmation(address) {
+/* async function checkDepositsConfirmation(address) {
     let allDepositsConfirmed = false;
     const startTime = Date.now();
     const timeoutDuration = 60000; // 1 minute in milliseconds
@@ -64,7 +64,7 @@ async function checkDepositsConfirmation(address) {
     }
     
     return allDepositsConfirmed;
-}
+} */
 
 describe('TA03 - Multiple Deposits', () => {
     test("basic workflow", async () => {
@@ -77,7 +77,7 @@ describe('TA03 - Multiple Deposits', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         
@@ -309,7 +309,7 @@ describe('TA03 - Multiple Deposits', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
         
         let amount = 1000;
         
@@ -578,7 +578,7 @@ describe('TA03 - Multiple Deposits', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         
@@ -817,7 +817,7 @@ describe('TA03 - Multiple Deposits', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
         
         let amount = 1000;
         
@@ -1067,7 +1067,7 @@ describe('TA03 - Multiple Deposits', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         let amount = 1000;
         

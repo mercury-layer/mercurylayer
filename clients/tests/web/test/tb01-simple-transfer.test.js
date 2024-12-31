@@ -3,7 +3,7 @@ import { describe, test, expect } from "vitest";
 import CoinStatus from 'mercuryweblib/coin_enum.js';
 import clientConfig from '../ClientConfig.js';
 import mercuryweblib from 'mercuryweblib';
-import { generateBlocks, depositCoin } from '../test-utils.js';
+import { generateBlocks, depositCoin, handleTokenResponse } from '../test-utils.js';
 
 describe('TB01 - Simple Transfer', () => {
     test("expected flow", async () => {
@@ -16,7 +16,7 @@ describe('TB01 - Simple Transfer', () => {
 
         let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
 
-        let token_id = tokenResponse.token_id;
+        let token_id = await handleTokenResponse(tokenResponse);
 
         const amount = 1000;
         
