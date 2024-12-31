@@ -18,13 +18,16 @@ describe('TB03 - Simple Atomic Transfer', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;
@@ -110,13 +113,16 @@ describe('TB03 - Atomic swap with second batchid missing', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;
@@ -202,13 +208,16 @@ describe('TB03 - Atomic swap without first batchid', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;
@@ -294,13 +303,16 @@ describe('TB03 - Atomic swap with timeout', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;
@@ -403,13 +415,16 @@ describe('TB03 - Atomic swap with first party steal', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;
@@ -512,13 +527,16 @@ describe('TB03 - Atomic swap with second party steal', () => {
         let wallet3 = await mercuryweblib.createWallet(clientConfig, "wallet3_tb03");
         let wallet4 = await mercuryweblib.createWallet(clientConfig, "wallet4_tb03");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
-        await mercuryweblib.newToken(clientConfig, wallet2.name);
+        let tokenResponse1 = await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse2 = await mercuryweblib.newToken(clientConfig, wallet2.name);
+
+        let token_id1 = tokenResponse1.token_id;
+        let token_id2 = tokenResponse2.token_id;
 
         const amount = 1000;
 
-        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
-        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, amount);
+        let result1 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id1, amount);
+        let result2 = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet2.name, token_id2, amount);
 
         const statechainId1 = result1.statechain_id;
         const statechainId2 = result2.statechain_id;

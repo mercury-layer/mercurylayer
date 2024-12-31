@@ -14,11 +14,13 @@ describe('TB01 - Simple Transfer', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb01");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb01");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = tokenResponse.token_id;
 
         const amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
         

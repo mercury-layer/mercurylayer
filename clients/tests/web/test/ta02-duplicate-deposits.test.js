@@ -14,11 +14,13 @@ describe('TA02 - Duplicated Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb02_1");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb02_1");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = tokenResponse.token_id;
 
         const amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
     
@@ -111,11 +113,13 @@ describe('TA02 - Duplicated Deposits', () => {
         let wallet1 = await mercuryweblib.createWallet(clientConfig, "wallet1_tb02_2");
         let wallet2 = await mercuryweblib.createWallet(clientConfig, "wallet2_tb02_2");
 
-        await mercuryweblib.newToken(clientConfig, wallet1.name);
+        let tokenResponse = await mercuryweblib.newToken(clientConfig, wallet1.name);
+
+        let token_id = tokenResponse.token_id;
 
         const amount = 1000;
         
-        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, amount);
+        let result = await mercuryweblib.getDepositBitcoinAddress(clientConfig, wallet1.name, token_id, amount);
 
         const statechainId = result.statechain_id;
     

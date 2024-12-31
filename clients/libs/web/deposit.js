@@ -5,7 +5,6 @@ import wasmUrl from 'mercury-wasm/mercury_wasm_bg.wasm?url'
 import * as mercury_wasm from 'mercury-wasm';
 import storageManager from './storage_manager.js';
 import transaction from './transaction.js';
-import CoinStatus from './coin_enum.js';
 import utils from './utils.js';
 
 /* const getTokenFromServer = async (clientConfig) => {
@@ -44,12 +43,10 @@ const getTokenFromServer = async (clientConfig) => {
 
 const getToken = async (clientConfig, walletName) => {
 
-    let wallet = storageManager.getWallet(walletName);
-    
     let token_response = await getTokenFromServer(clientConfig);
 
     // for dev purposes
-    let token = {};
+    /* let token = {};
     token.token_id = token_response.token_id;
     token.confirmed = true;
     token.spent = false;
@@ -59,11 +56,13 @@ const getToken = async (clientConfig, walletName) => {
     token.processor_id = "1";
     token.expiry = "2024-12-26T17:29:50.013Z";
 
-    wallet.tokens.push(token);
+    let wallet = storageManager.getWallet(walletName);
 
-    storageManager.updateWallet(wallet);
+    wallet.tokens.push(token); 
 
-    return token;
+    storageManager.updateWallet(wallet); */
+
+    return token_response;
 }
 
 const init = async (clientConfig, wallet, token_id) => {
@@ -97,19 +96,21 @@ const init = async (clientConfig, wallet, token_id) => {
     storageManager.updateWallet(wallet);
 }
 
-const getDepositBitcoinAddress = async (clientConfig, walletName, amount) => {
+const getDepositBitcoinAddress = async (clientConfig, walletName, token_id, amount) => {
 
     await initWasm(wasmUrl);
 
     let wallet = storageManager.getWallet(walletName);
 
-    let foundToken = wallet.tokens.find(token => token.confirmed === true && token.spent === false);
+    /* let foundToken = wallet.tokens.find(token => token.confirmed === true && token.spent === false);
 
     if (!foundToken) {
         throw new Error(`There is no token available`);
     }
 
-    await init(clientConfig, wallet, foundToken.token_id);
+    await init(clientConfig, wallet, foundToken.token_id); */
+
+    await init(clientConfig, wallet, token_id);
 
     let coin = wallet.coins[wallet.coins.length - 1];
 
@@ -119,7 +120,7 @@ const getDepositBitcoinAddress = async (clientConfig, walletName, amount) => {
     coin.aggregated_address = aggregatedPublicKey.aggregate_address;
     coin.aggregated_pubkey = aggregatedPublicKey.aggregate_pubkey;
 
-    foundToken.spent = true;
+    // foundToken.spent = true;
 
     storageManager.updateWallet(wallet);
 
