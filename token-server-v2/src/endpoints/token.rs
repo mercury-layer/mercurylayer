@@ -11,12 +11,18 @@ use crate::{server_config, server_state::TokenServerState};
 
 pub async fn get_descriptor_index(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, checksum: &str) -> i32 {
     // Lock the table first to prevent concurrent insertions
-    sqlx::query("LOCK TABLE public.tokens IN SHARE MODE")
+    /* sqlx::query("LOCK TABLE public.tokens IN SHARE MODE")
         .execute(&mut **tx)
         .await
-        .unwrap();
+        .unwrap(); */
 
     // Then get the max index
+    /* let row = sqlx::query(
+        "SELECT MAX(t.onchain_address_index) FROM (SELECT onchain_address_index \
+        FROM public.tokens \
+        WHERE descriptor_checksum = $1
+        FOR UPDATE) AS t"
+    ) */
     let row = sqlx::query(
         "SELECT MAX(onchain_address_index) \
         FROM public.tokens \
@@ -195,7 +201,9 @@ pub async fn token_verify(token_server_state: &State<TokenServerState>, token_id
 
     let address = address.unwrap();
 
-    let utxo_list =  server_config.electrum_client.script_list_unspent(&address.script_pubkey());
+    let electrum_client = server_config.get_electrum_client();
+
+    let utxo_list =  electrum_client.script_list_unspent(&address.script_pubkey());
 
     if utxo_list.is_err() {
         let response_body = json!({
@@ -244,7 +252,7 @@ pub async fn token_verify(token_server_state: &State<TokenServerState>, token_id
         return status::Custom(Status::Ok, Json(response_body));
     }
 
-    let block_header = server_config.electrum_client.block_headers_subscribe_raw();
+    let block_header = electrum_client.block_headers_subscribe_raw();
 
     if block_header.is_err() {
         let response_body = json!({

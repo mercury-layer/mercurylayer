@@ -9,7 +9,7 @@ pub struct ServerConfig {
     /// Bitcoin network
     pub network: String,
     /// Electrum client
-    pub electrum_client: electrum_client::Client,
+    pub electrum_server_url: String,
     /// Token fee value (satoshis)
     pub fee: u64,
     /// Confirmation target
@@ -29,18 +29,18 @@ pub struct ServerConfig {
 impl ServerConfig {
     pub fn load() -> Self {
 
-        let settings = ConfigRs::builder()
+        let settings: Option<ConfigRs> = ConfigRs::builder()
             .add_source(File::with_name("Settings"))
             .build()
-            .unwrap();
+            .ok();
         
         // Function to fetch a setting from the environment or fallback to the config file
         let get_env_or_config = |key: &str, env_var: &str| -> String {
-            env::var(env_var).unwrap_or_else(|_| settings.get_string(key).unwrap())
+            env::var(env_var).unwrap_or_else(|_| settings.as_ref().unwrap().get_string(key).unwrap())
         };
 
         let electrum_server_url = get_env_or_config("electrum_server", "ELECTRUM_SERVER");
-        let electrum_client = electrum_client::Client::new(electrum_server_url.as_str()).unwrap();
+        // let electrum_client: electrum_client::Client = electrum_client::Client::new(electrum_server_url.as_str()).unwrap();
 
         ServerConfig {
             db_user: get_env_or_config("db_user", "DB_USER"),
@@ -50,10 +50,14 @@ impl ServerConfig {
             db_name: get_env_or_config("db_name", "DB_NAME"),
             public_key_descriptor: get_env_or_config("public_key_descriptor", "PUBLIC_KEY_DESCRIPTOR"),
             network: get_env_or_config("network", "BITCOIN_NETWORK"),
-            electrum_client,
+            electrum_server_url,
             fee: get_env_or_config("fee", "FEE").parse::<u64>().unwrap(),
             confirmation_target: get_env_or_config("confirmation_target", "CONFIRMATION_TARGET").parse::<u32>().unwrap(),
         }
+    }
+
+    pub fn get_electrum_client(&self) -> electrum_client::Client {
+        electrum_client::Client::new(&self.electrum_server_url.as_str()).unwrap()
     }
 
     pub fn build_postgres_connection_string(&self) -> PgConnectOptions {

@@ -2,10 +2,6 @@ mod endpoints;
 mod server_config;
 mod server_state;
 
-use std::str::FromStr;
-
-use miniscript::{bitcoin::Network, Descriptor, DescriptorPublicKey};
-
 #[macro_use] extern crate rocket;
 
 use rocket::{serde::json::{Value, json}, Request, Response};
@@ -30,8 +26,6 @@ fn not_found(req: &Request) -> Value {
 
 #[rocket::main]
 async fn main() {
-
-    main2();
 
     server_config::ServerConfig::load();
 
@@ -86,32 +80,3 @@ impl Fairing for Cors {
     }
 }
 
-fn main2() {
-
-    let desc_str = "wpkh([656a457c/84'/1'/0']tpubDCTXiLu1wcqUwQK6QMPPUTBzbRjsqMABzCvd5vG22KGoA95cTG1VkszQQJyx24UP8KEJVKrKRDRtUPodHVV59CfNqUkXjKUagowHJVSWq4C/0/*)#vn0n5xcd";
-
-    let descriptor = Descriptor::<DescriptorPublicKey>::from_str(desc_str).unwrap();
-
-    let network = Network::Regtest;
-
-    // Get the unique identifier (descriptor without checksum + checksum)
-    let desc_id = descriptor.to_string();  // This includes the checksum
-    println!("Descriptor ID (with checksum): {}", desc_id);
-
-    // If you need just the checksum part
-    if let Some(checksum) = desc_id.split('#').nth(1) {
-        println!("Descriptor checksum: {}", checksum);
-    }
-
-    // Derive addresses for indices 0 to 5
-    for i in 0..5 {
-
-        let derived_desc = descriptor.at_derivation_index(i).unwrap();
-        
-        // Get the address
-        let address = derived_desc.address(network).unwrap();
-        
-        println!("Index {}: {}", i, address);
-
-    }
-}

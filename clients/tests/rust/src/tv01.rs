@@ -67,7 +67,13 @@ async fn w1_transfer_to_w2(client_config: &ClientConfig, wallet1: &Wallet, walle
 
     let err = result.err().unwrap();
 
-    assert!(err.to_string() == "Electrum server error: {\"code\":2,\"message\":\"non-final\"}");
+    let electrs_msg_err = "Electrum server error: {\"code\":2,\"message\":\"non-final\"}";
+
+    let esplora_msg_err = r#"Electrum server error: "sendrawtransaction RPC error: {\"code\":-26,\"message\":\"non-final\"}""#;
+
+    let err_msg = err.to_string();
+
+    assert!(err_msg == electrs_msg_err || err_msg == esplora_msg_err);
 
     let _ = bitcoin_core::generatetoaddress(990, &core_wallet_address.clone().unwrap())?;
 

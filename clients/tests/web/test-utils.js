@@ -155,6 +155,8 @@ const handleTokenResponse = async (tokenResponse) => {
 
     if (tokenResponse.payment_method == "onchain") {
 
+        console.log(">>>>>>>>>>>> Onchain payment method");
+
         let remainingBlocks = tokenResponse.confirmation_target;
         let depositAddress = tokenResponse.deposit_address;
 
@@ -165,6 +167,8 @@ const handleTokenResponse = async (tokenResponse) => {
         await generateBlocks(remainingBlocks);
 
         await checkDepositsConfirmation(depositAddress);
+
+        console.log(">>>>>>>>>>>> Deposit confirmed");
     }
 
     return tokenId;

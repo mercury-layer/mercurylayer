@@ -79,11 +79,29 @@ const init = async (clientConfig, wallet, token_id) => {
     const path = "deposit/init/pod";
     const url = statechain_entity_url + '/' + path;
 
-    const response = await axios.post(url, depositMsg1);
+    let response = null;
+    try {
+        response = await axios.post(url, depositMsg1);
+      } catch (error) {
+        // Get error message from response body
+        let err_msg = "";
+        if (error.response) {
+          // Server responded with error
+          console.log('Error body:', error.response.data);
+          err_msg = error.response.data;
+        } else if (error.request) {
+          // Request made but no response received
+          console.log('No response received:', error.request);
+          err_msg = error.request;
+        } else {
+          // Error setting up request
+          console.log('Error:', error.message);
+          err_msg = error.message;
+        }
 
-    if (response.status != 200) {
-        throw new Error(`Deposit error: ${response.data}`);
-    }
+        throw new Error(`Deposit error: ${err_msg}`);
+      }
+
 
     let depositMsg1Response = response.data;
 
