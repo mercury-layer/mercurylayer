@@ -116,7 +116,7 @@ services:
         "fee": 0.0001,
         "unit": "BTC"
         }'
-      # TOKEN_SERVER_URL: http://token-server-v2:8001
+      TOKEN_SERVER_URL: http://token-server-v2:8001
     ports:
       - "8000:8000"
 

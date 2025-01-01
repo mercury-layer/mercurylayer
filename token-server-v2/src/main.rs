@@ -27,8 +27,6 @@ fn not_found(req: &Request) -> Value {
 #[rocket::main]
 async fn main() {
 
-    server_config::ServerConfig::load();
-
     let token_server = TokenServerState::new().await;
 
     let _ = rocket::build()

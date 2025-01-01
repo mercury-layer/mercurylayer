@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use bitcoin::{hashes::{sha256, Hash}, network::message};
+use bitcoin::hashes::{sha256, Hash};
 use rocket::{serde::json::Json, response::status, State, http::Status};
 use secp256k1_zkp::{XOnlyPublicKey, schnorr::Signature, Message, Secp256k1, PublicKey};
 use serde::{Serialize, Deserialize};

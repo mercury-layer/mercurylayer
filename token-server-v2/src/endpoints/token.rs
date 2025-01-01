@@ -9,20 +9,7 @@ use sqlx::Row;
 
 use crate::{server_config, server_state::TokenServerState};
 
-pub async fn get_descriptor_index(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, checksum: &str) -> i32 {
-    // Lock the table first to prevent concurrent insertions
-    /* sqlx::query("LOCK TABLE public.tokens IN SHARE MODE")
-        .execute(&mut **tx)
-        .await
-        .unwrap(); */
-
-    // Then get the max index
-    /* let row = sqlx::query(
-        "SELECT MAX(t.onchain_address_index) FROM (SELECT onchain_address_index \
-        FROM public.tokens \
-        WHERE descriptor_checksum = $1
-        FOR UPDATE) AS t"
-    ) */
+/* pub async fn get_descriptor_index(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, checksum: &str) -> i32 {
     let row = sqlx::query(
         "SELECT MAX(onchain_address_index) \
         FROM public.tokens \
@@ -35,7 +22,7 @@ pub async fn get_descriptor_index(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>
 
     let index: Option<i32> = row.get(0);
     index.map(|i| i + 1).unwrap_or(0)
-}
+} */
 
 pub async fn insert_new_token(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, 
@@ -61,21 +48,33 @@ pub async fn insert_new_token(
 #[get("/token/token_gen")]
 pub async fn token_gen(token_server_state: &State<TokenServerState>) -> status::Custom<Json<Value>> {
 
-    let server_config = server_config::ServerConfig::load();
+    /* let server_config = server_config::ServerConfig::load();
     let descriptor = Descriptor::<DescriptorPublicKey>::from_str(&server_config.public_key_descriptor).unwrap();
     let network = miniscript::bitcoin::Network::from_str(server_config.network.as_str()).unwrap();
-    let desc_str = descriptor.to_string();
+    et desc_str = descriptor.to_string();
     let checksum = desc_str.split('#').nth(1);
     if checksum.is_none() {
         return status::Custom(Status::InternalServerError, Json(json!("Unable to get descriptor checksum")));
     }
-    let checksum = checksum.unwrap();
+    let checksum = checksum.unwrap(); */
+
+    let server_config = &token_server_state.server_config;
+    let descriptor = Descriptor::<DescriptorPublicKey>::from_str(&server_config.public_key_descriptor).unwrap();
+    let network = miniscript::bitcoin::Network::from_str(server_config.network.as_str()).unwrap();
+    let checksum = &token_server_state.checksum;
 
     // Start a transaction
     let mut tx = token_server_state.pool.begin().await.unwrap();
 
     // Get next index within transaction
-    let index = get_descriptor_index(&mut tx, checksum).await;
+    // let index = get_descriptor_index(&mut tx, checksum).await;
+
+    // Get and increment index - The lock is released immediately
+    let index = {
+        let mut key_index = token_server_state.key_index.lock().unwrap();
+        *key_index += 1;
+        *key_index
+    }; // MutexGuard is dropped here
 
     let derived_desc = descriptor.at_derivation_index(index as u32).unwrap();
     let address = derived_desc.address(network).unwrap();
@@ -83,7 +82,7 @@ pub async fn token_gen(token_server_state: &State<TokenServerState>) -> status::
     let onchain_address = address.to_string();
 
     // Insert within the same transaction
-    insert_new_token(&mut tx, &token_id, &onchain_address, checksum, index).await;
+    insert_new_token(&mut tx, &token_id, &onchain_address, checksum, index as i32).await;
 
     // Commit the transaction
     tx.commit().await.unwrap();
@@ -186,7 +185,7 @@ pub async fn token_verify(token_server_state: &State<TokenServerState>, token_id
 
     let unchecked_address = address.unwrap();
 
-    let server_config = server_config::ServerConfig::load();
+    let server_config = &token_server_state.server_config;
 
     let network = bitcoin::Network::from_str(server_config.network.as_str()).unwrap();
 
