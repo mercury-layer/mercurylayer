@@ -7,22 +7,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{Value, json};
 use sqlx::Row;
 
-use crate::{server_config, server_state::TokenServerState};
-
-/* pub async fn get_descriptor_index(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, checksum: &str) -> i32 {
-    let row = sqlx::query(
-        "SELECT MAX(onchain_address_index) \
-        FROM public.tokens \
-        WHERE descriptor_checksum = $1"
-    )
-    .bind(checksum)
-    .fetch_one(&mut **tx)
-    .await
-    .unwrap();
-
-    let index: Option<i32> = row.get(0);
-    index.map(|i| i + 1).unwrap_or(0)
-} */
+use crate::server_state::TokenServerState;
 
 pub async fn insert_new_token(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, 
@@ -48,16 +33,6 @@ pub async fn insert_new_token(
 #[get("/token/token_gen")]
 pub async fn token_gen(token_server_state: &State<TokenServerState>) -> status::Custom<Json<Value>> {
 
-    /* let server_config = server_config::ServerConfig::load();
-    let descriptor = Descriptor::<DescriptorPublicKey>::from_str(&server_config.public_key_descriptor).unwrap();
-    let network = miniscript::bitcoin::Network::from_str(server_config.network.as_str()).unwrap();
-    et desc_str = descriptor.to_string();
-    let checksum = desc_str.split('#').nth(1);
-    if checksum.is_none() {
-        return status::Custom(Status::InternalServerError, Json(json!("Unable to get descriptor checksum")));
-    }
-    let checksum = checksum.unwrap(); */
-
     let server_config = &token_server_state.server_config;
     let descriptor = Descriptor::<DescriptorPublicKey>::from_str(&server_config.public_key_descriptor).unwrap();
     let network = miniscript::bitcoin::Network::from_str(server_config.network.as_str()).unwrap();
@@ -65,9 +40,6 @@ pub async fn token_gen(token_server_state: &State<TokenServerState>) -> status::
 
     // Start a transaction
     let mut tx = token_server_state.pool.begin().await.unwrap();
-
-    // Get next index within transaction
-    // let index = get_descriptor_index(&mut tx, checksum).await;
 
     // Get and increment index - The lock is released immediately
     let index = {

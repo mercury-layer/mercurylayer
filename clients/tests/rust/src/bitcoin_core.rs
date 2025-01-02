@@ -15,7 +15,6 @@ pub fn get_container_id() -> Result<String> {
     let container_id = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     if container_id.is_empty() {
-        // return Err(anyhow!("No container found with the name lnd_docker-bitcoind-1"));
         return Err(anyhow!("No container found with the name esplora-container"));
     }
 
@@ -46,7 +45,6 @@ pub fn sendtoaddress(amount_in_sats: u32, address: &str) -> Result<String> {
     let amount = amount_in_sats as f64 / 100_000_000.0;
 
     let bitcoin_command = format!(
-        // "bitcoin-cli -regtest -rpcuser=user -rpcpassword=pass sendtoaddress {} {}", address, amount
         "cli sendtoaddress {} {}", address, amount
     );
 
@@ -56,7 +54,6 @@ pub fn sendtoaddress(amount_in_sats: u32, address: &str) -> Result<String> {
 pub fn generatetoaddress(num_blocks: u32, address: &str) -> Result<String> {
 
     let bitcoin_command = format!(
-        // "bitcoin-cli -regtest -rpcuser=user -rpcpassword=pass generatetoaddress {} {}", num_blocks, address
         "cli generatetoaddress {} {}", num_blocks, address
     );
 
@@ -71,7 +68,6 @@ pub fn generatetoaddress(num_blocks: u32, address: &str) -> Result<String> {
 pub fn getnewaddress() -> Result<String> {
 
     let bitcoin_command = format!(
-        // "bitcoin-cli -regtest -rpcuser=user -rpcpassword=pass getnewaddress"
         "cli getnewaddress"
     );
 

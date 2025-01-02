@@ -94,47 +94,6 @@ pub async fn get_token(statechain_entity: &State<StateChainEntity>) -> status::C
     }
 }
 
-/* #[get("/tokens/token_init")]
-pub async fn token_init(statechain_entity: &State<StateChainEntity>) -> status::Custom<Json<Value>>  {
-
-    let config = crate::server_config::ServerConfig::load();
-
-    if config.network == "mainnet" {
-        let response_body = json!({
-            "error": "Internal Server Error",
-            "message": "Token generation not supported on mainnet."
-        });
-    
-        return status::Custom(Status::InternalServerError, Json(response_body));
-    }
-
-    let btc_payment_address = String::from("tb1qdgjdmmsdp5hkrhwl6cxd3uvt6hvjvlmmzucdca");
-    let fee =  String::from("0.0001");
-    let lightning_invoice =  String::from("lnbc10u1pj3knpdsp5k9f25s2wpzewkf9c78pftkgnkuuz82erkcjml7zkgsp7znyhs5yspp5rxz3tkc7ydgln3u7ez6duhp0g6jpzgtnn7ph5xrjy6muh9xm07wqdp2f9h8vmmfvdjjqen0wgsy6ctfdeehgcteyp6x76m9dcxqyjw5qcqpj9qyysgq6z9whs8am75r6mzcgt76vlwgk5g9yq5g8xefdxx6few6d5why7fs7h5g2dx9hk7s60ywtnkyc0f3p0cha4a9kmgkq5jvu5e7hvsaawqpjtf8p4");
-    let processor_id = uuid::Uuid::new_v4().to_string();
-    let token_id = uuid::Uuid::new_v4().to_string();
-    let confirmed = false;
-    let spent = false;
-    let expiry = String::from("2024-12-26T17:29:50.013Z");
-
-    crate::database::deposit::insert_new_token(&statechain_entity.pool, &token_id).await;
-
-    let token = mercurylib::wallet::Token {
-        btc_payment_address,
-        fee,
-        lightning_invoice,
-        processor_id,
-        token_id,
-        confirmed,
-        spent,
-        expiry
-    };
-
-    let response_body = json!(token);
-
-    return status::Custom(Status::Ok, Json(response_body));
-} */
-
 fn get_random_enclave_index(statechain_id: &str, enclaves: &Vec<Enclave>) -> Result<usize, String> {
     let index_from_statechain_id = get_enclave_index_from_statechain_id(statechain_id, enclaves.len() as u32);
 
@@ -247,26 +206,6 @@ pub async fn post_deposit(statechain_entity: &State<StateChainEntity>, deposit_m
     
         return status::Custom(Status::BadRequest, Json(response_body));
     }
-
-    /* let valid_token =  crate::database::deposit::get_token_status(&statechain_entity.pool, &token_id).await;
-
-    if valid_token.is_none() {
-        let response_body = json!({
-            "error": "Deposit Error",
-            "message": "Token ID not found."
-        });
-    
-        return status::Custom(Status::NotFound, Json(response_body));
-    }
-
-    if !valid_token.unwrap() {
-        let response_body = json!({
-            "error": "Deposit Error",
-            "message": "Token unpaid or used."
-        });
-    
-        return status::Custom(Status::Gone, Json(response_body));
-    } */
 
    let token_info = crate::database::deposit::get_token_info(&statechain_entity.pool, &token_id).await;
 

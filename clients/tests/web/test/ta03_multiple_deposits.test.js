@@ -40,32 +40,6 @@ async function validateBackupTransactions(backupTransactions, interval) {
     }
 }
 
-/* async function checkDepositsConfirmation(address) {
-    let allDepositsConfirmed = false;
-    const startTime = Date.now();
-    const timeoutDuration = 60000; // 1 minute in milliseconds
-    
-    while (Date.now() - startTime < timeoutDuration) {
-
-        const response = await axios.get(`${clientConfig.esploraServer}/api/address/${address}/utxo`);
-        const transactions = response.data;
-
-        // Check if all transactions are confirmed
-        const allConfirmed = transactions.every(tx => tx.status.confirmed === true);
-        
-        if (allConfirmed) {
-            allDepositsConfirmed = true;
-            console.log('All deposits confirmed!');
-            break;
-        }
-        
-        // Wait for 2 seconds before next check
-        await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    
-    return allDepositsConfirmed;
-} */
-
 describe('TA03 - Multiple Deposits', () => {
     test("basic workflow", async () => {
 

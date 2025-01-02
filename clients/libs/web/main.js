@@ -32,8 +32,8 @@ const createWallet = async (clientConfig, name) => {
   return wallet;
 }
 
-const newToken = async (clientConfig, walletName) => {
-  return await deposit.getToken(clientConfig, walletName);
+const newToken = async (clientConfig) => {
+  return await deposit.getToken(clientConfig);
 }
 
 const getDepositBitcoinAddress = async (clientConfig, walletName, token_id, amount) => {
