@@ -65,3 +65,8 @@ $ npm install chai
 $ node server-regtest.cjs # start the test server
 $ npx vitest --browser.name=chromium --browser.headless --reporter=basic --disable-console-intercept
 ```
+
+# Other Environments
+
+The `docker compose -f docker-compose-token-servers.yml` file can be used to build a Mercury Layer infrastructure in test or production environments as it has all the necessary servers including Lockbox, Electrs/Esplora, Token, and Mercury.
+The default values ​​of this file however must be changed.

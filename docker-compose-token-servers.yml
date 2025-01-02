@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   esplora:
@@ -143,6 +141,3 @@ services:
 volumes:
   postgres_lockbox_data:
   postgres_server_data:
-
-
-
