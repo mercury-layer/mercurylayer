@@ -29,9 +29,7 @@ services:
       retries: 30
 
   lockbox:
-    build:
-      context: lockbox
-      dockerfile: ./Dockerfile
+    image: mercurylayer/lockbox:latest
     depends_on:
       - db_lockbox
       - vault-init
@@ -48,13 +46,11 @@ services:
       - "18080:18080"
 
   token-server-v2:
-    build:
-      context: .
-      dockerfile: ./token-server-v2/Dockerfile
+    image: mercurylayer/token-server:latest
     container_name: mercurylayer-token-server-v2-1
     environment:
       PUBLIC_KEY_DESCRIPTOR: wpkh([656a457c/84'/1'/0']tpubDCTXiLu1wcqUwQK6QMPPUTBzbRjsqMABzCvd5vG22KGoA95cTG1VkszQQJyx24UP8KEJVKrKRDRtUPodHVV59CfNqUkXjKUagowHJVSWq4C/0/*)#vn0n5xcd
-      BITCOIN_NETWORK: regtest
+      BITCOIN_NETWORK: mainnet
       ELECTRUM_SERVER: tcp://blockstream.info:50001
       FEE: 10000
       CONFIRMATION_TARGET: 2
@@ -66,13 +62,10 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - esplora
       - db_server
 
   mercury-server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
+    image: mercurylayer/mercury-server:latest
     container_name: mercurylayer-mercury-server-1
     depends_on:
       - db_server
@@ -80,8 +73,8 @@ services:
       - token-server-v2
     environment:
       BITCOIN_NETWORK: mainnet
-      LOCKHEIGHT_INIT: 1000
-      LH_DECREMENT: 10
+      LOCKHEIGHT_INIT: 50000
+      LH_DECREMENT: 6
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_HOST: db_server
@@ -93,7 +86,7 @@ services:
         "relay_server": "wss://relay.damus.io/", 
         "relay_interval": 15, 
         "nostr_privkey": "nsec17e0nvplcze4k7q9nazrw0k3aracwhg6vmuareewjp83ta89njw5spjcgzs", 
-        "server_url": "http://mercury_server.xyz", 
+        "server_url": "http://xxxxxxxxxx.onion", 
         "location": "UK",
         "active": true,
         "onchain_payments": false,
@@ -124,7 +117,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_server_data:/var/lib/postgresql/data
-
+ 
   tor:
     image: dperson/torproxy:latest
     container_name: tor_node
