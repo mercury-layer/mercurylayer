@@ -120,17 +120,12 @@ services:
  
   tor:
     image: dperson/torproxy:latest
-    container_name: tor_node
-    restart: always
+    container_name: tor_service
+    restart: unless-stopped
     volumes:
-      - ./tor_data:/var/lib/tor # Persist Tor configuration
-    environment:
-      - USER=tor
-      - GROUP=tor
-    command: >
-      --hidden-service /var/lib/tor/hidden_service
-      --hidden-service-dir /var/lib/tor/hidden_service
-      --hidden-service-port 80=rest_server:8000
+      - ./tor:/etc/tor:rw
+      - ./hidden_service:/var/lib/tor/hidden_service
+    entrypoint: /usr/bin/tor -f /etc/tor/torrc
     depends_on:
       - mercury-server
 
